@@ -9,6 +9,8 @@ use std::io::{self, Write};
 fn main() -> std::io::Result<()> {
     println!("Hello from [compiler] crate!");
 
+    // TODO remove compiled bin file from directory (call "rm")
+
     let path = env::current_dir()?;
     //println!("The current directory is {}", path.display());
     
