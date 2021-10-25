@@ -4,9 +4,14 @@ pub struct CppCompiler {
 
 }
 
-impl CppCompiler {
-    pub fn Compile(input_data::InputData) {
+impl Compiler for CppCompiler {
+    pub fn Compile(input_data: InputData) -> OutputData {
+        let output_data: OutputData;
 
+        //output_data.header = ...
+        //output_data.result = ...
+
+        output_data
     }
 
 }

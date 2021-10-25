@@ -4,7 +4,7 @@ pub struct RustCompiler {
 
 }
 
-impl RustCompiler {
+impl Compiler for RustCompiler {
     pub fn Compile(input_data::InputData) {
 
     }
