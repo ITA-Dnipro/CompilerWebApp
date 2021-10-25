@@ -1,5 +1,5 @@
-use super::compilers_list;
+use super::compiler_type::CompilerType;
 
 pub struct Header {
-    compiler_name: ;
+    pub compiler_type: CompilerType,
 }
