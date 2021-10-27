@@ -12,7 +12,9 @@ impl Compiler for RustCompiler {
     fn compile(&self, input_data: &InputData) -> OutputData {
         let output_data = OutputData {
             is_succes: false,
-            returnet_text: String::from("Empty result"),
+            status_code: Some(-1),
+            stdout: Vec::new(),
+            stderr: Vec::new(),
         };
 
         //output_data.header = ...

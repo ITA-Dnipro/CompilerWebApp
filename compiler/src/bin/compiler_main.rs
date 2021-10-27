@@ -29,15 +29,7 @@ fn main() -> std::io::Result<()> {
                 .expect("failed to execute process");
     
 
-    if output.status.success() {
-        
-
-    } else {
-
-    }
-
-
-    let s: String = String::from(output.status);
+    //let s: String = String::from(output.status);
                 
     println!("Compiling status: {}", output.status);
     io::stdout().write_all(&output.stdout).unwrap();
