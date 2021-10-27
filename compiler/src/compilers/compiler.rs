@@ -3,5 +3,5 @@ use super::super::data::output_data::OutputData;
 
 
 pub trait Compiler {
-    fn Compile(&self, input_data: InputData) -> OutputData;
+    fn compile(&self, input_data: &InputData) -> OutputData;
 }

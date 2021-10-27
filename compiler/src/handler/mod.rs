@@ -10,15 +10,15 @@ use super::compilers::compiler::Compiler;
 
 // main process
 
-pub fn RunCompilation(input_data: InputData) -> OutputData {
+pub fn run_compilation(input_data: &InputData) -> OutputData {
     
 
-    let compiler = SelectCompiler(input_data.header.compiler_type);
-    let output_data: OutputData = compiler.Compile(input_data);
+    let compiler = select_compiler(&input_data.compiler_type);
+    let output_data: OutputData = compiler.compile(input_data);
     output_data
 }
 
-fn SelectCompiler(compiler_type: CompilerType) -> Box<dyn Compiler> {
+fn select_compiler(compiler_type: &CompilerType) -> Box<dyn Compiler> {
     
     
     match compiler_type {
@@ -28,10 +28,6 @@ fn SelectCompiler(compiler_type: CompilerType) -> Box<dyn Compiler> {
 
         CompilerType::Rust => {
             Box::new(RustCompiler {})
-        }
-
-        _ => {
-            Box::new(CppCompiler {})
         }
     } 
 }
