@@ -5,5 +5,6 @@ trait Storage {
     fn read_output();
 }
 
-
-// TODO use crate for tmp files https://docs.rs/tempfile/3.2.0/tempfile/index.html
+// TODO Write stdout and stderr to temp files
+// TODO Chech file existance with the same name
+// TODO Clean bin directory
