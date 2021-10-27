@@ -6,7 +6,7 @@ use std::process::Command;
 use super::compiler::Compiler;
 use super::super::data::input_data::InputData;
 use super::super::data::output_data::OutputData;
-
+use super::super::storage::name_generator::generate_filename;
 
 pub struct CppCompiler {
 
@@ -22,11 +22,13 @@ impl Compiler for CppCompiler {
             stderr: Vec::new(),
         };
 
-        //let filepath = String::from(input_data.source_code_filepath);
+        let bin_filename = generate_filename().to_owned();
+        let mut full_bin_filename = "./temp/bin/".to_owned();
+        full_bin_filename.push_str(&bin_filename);
 
         let compiler_output = Command::new("g++")
                 //.current_dir(path)
-                .args(["-o", "./temp/bin/test", &input_data.source_code_filepath])
+                .args(["-o", &full_bin_filename, &input_data.source_code_filepath])
                 .output()
                 .expect("failed to execute process");
     

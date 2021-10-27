@@ -9,3 +9,6 @@ path = "src/lib.rs"
 [[bin]]
 name = "testbin"
 path = "src/bin/compiler_main.rs"
+
+[dependencies]
+chrono = "0.4"
