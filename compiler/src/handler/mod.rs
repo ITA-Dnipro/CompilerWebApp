@@ -9,7 +9,6 @@ use super::compilers::compiler::Compiler;
 
 
 // main process
-
 pub fn run_compilation(input_data: &InputData) -> OutputData {
     
 
@@ -19,8 +18,6 @@ pub fn run_compilation(input_data: &InputData) -> OutputData {
 }
 
 fn select_compiler(compiler_type: &CompilerType) -> Box<dyn Compiler> {
-    
-    
     match compiler_type {
         CompilerType::Cpp => {
             Box::new(CppCompiler {})

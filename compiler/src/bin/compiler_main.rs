@@ -10,11 +10,12 @@ fn main() -> std::io::Result<()> {
     println!("Hello from [compiler] crate!");
 
     // TODO remove compiled bin file from directory (call "rm")
-
     
     // TODO read about using env variables - in Ubuntu "export varName = varValue"
     // read varName with program start - validate varValue!
+
     // TODO check g++ compiler installed
+
     //
     let path = env::current_dir()?;
     
@@ -28,7 +29,15 @@ fn main() -> std::io::Result<()> {
                 .expect("failed to execute process");
     
 
+    if output.status.success() {
+        
 
+    } else {
+
+    }
+
+
+    let s: String = String::from(output.status);
                 
     println!("Compiling status: {}", output.status);
     io::stdout().write_all(&output.stdout).unwrap();

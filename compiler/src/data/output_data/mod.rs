@@ -13,8 +13,10 @@ pub struct OutputData {
 }
 */
 
-// Simplified structure for the very first step
+// Simplified structure for the very first step - based on Struct std::process::Output
 pub struct OutputData {
     pub is_succes: bool,
-    pub returnet_text: String,    
+    pub status_code: Option<i32>,
+    pub stdout: Vec<u8>,
+    pub stderr: Vec<u8>, 
 }
