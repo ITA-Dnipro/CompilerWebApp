@@ -1,3 +1,11 @@
 [package]
 name = "compiler"
 version = "0.1.0"
+
+[lib]
+name = "compiler"
+path = "src/lib.rs"
+
+[[bin]]
+name = "testbin"
+path = "src/bin/compiler_main.rs"
