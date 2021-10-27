@@ -2,6 +2,6 @@
 
 int main()
 {
-    std::cout << "Hello world!\n";
+    std::cout << "Hello from folder \\temp\\src\\!\n";
     return 0;   
 }

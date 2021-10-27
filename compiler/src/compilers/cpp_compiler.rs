@@ -22,11 +22,11 @@ impl Compiler for CppCompiler {
             stderr: Vec::new(),
         };
 
-        //let path = env::current_dir()?;
+        //let filepath = String::from(input_data.source_code_filepath);
 
         let compiler_output = Command::new("g++")
                 //.current_dir(path)
-                .args(["-o", "./src/bin/test", "./src/bin/test.cpp"])
+                .args(["-o", "./temp/bin/test", &input_data.source_code_filepath])
                 .output()
                 .expect("failed to execute process");
     

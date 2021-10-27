@@ -18,7 +18,7 @@ fn main() -> std::io::Result<()> {
 
     let input_data = InputData {
         compiler_type: CompilerType::Cpp,
-        source_code: String::from("Here will be filepath to source code"),
+        source_code_filepath: String::from("./temp/src/test.cpp"),
     };
 
     let output_data = run_compilation(&input_data);
