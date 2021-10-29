@@ -24,14 +24,11 @@ pub async fn post_submit(compilation_json: Json<InputCode>)
 
     // Handling of the result
     // TODO: if result is Ok - write bin file into json, else respond with error messages
-    let some_result_path = "target/example/test.txt";
-    let compiled_data = std::fs::read(some_result_path)
-        .expect("Panic on reading compiler output");
 
     Ok(Json(OutputCode {
-        stdin: "some stdin".to_owned(),
+        status_code: 0,
         stdout: "some stdout".to_owned(),
-        result: compiled_data
+        stderr: "some stderr".to_owned()
     }))
 }
 
