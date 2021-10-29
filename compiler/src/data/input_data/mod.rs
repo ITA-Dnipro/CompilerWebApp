@@ -3,6 +3,20 @@ pub mod header;
 pub mod options;
 pub mod source_code;
 
+
+use std::path::Path;
+
+
+// Simplified structure for the very first step
+use self::compiler_type::CompilerType;
+
+pub struct InputData {
+    pub compiler_type: CompilerType,
+    pub source_code_filepath: Box<Path>,  
+    pub compiler_options: String,
+}
+
+
 // TODO implement this complete structure 
 /*
 use self::header::Header;
@@ -15,12 +29,3 @@ pub struct InputData {
     pub source_code: SourceCode,
 }
 */
-
-// Simplified structure for the very first step
-use self::compiler_type::CompilerType;
-
-pub struct InputData {
-    pub compiler_type: CompilerType,
-    pub source_code_filepath: String,  
-    pub compiler_options: String,
-}

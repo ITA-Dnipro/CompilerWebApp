@@ -6,6 +6,7 @@ extern crate compiler;
 use std::env;
 use std::process::Command;
 use std::io::{self, Write};
+use std::path::Path;
 
 
 use compiler::handler::run_compilation;
@@ -18,7 +19,8 @@ fn main() -> std::io::Result<()> {
 
     let input_data = InputData {
         compiler_type: CompilerType::Cpp,
-        source_code_filepath: String::from("./temp/src/test.cpp"),
+        //source_code_filepath: String::from("./temp/src/test.cpp"),
+        source_code_filepath: Box<Path::new("./temp/src/test.cpp")>,
         compiler_options: String::from("-g"),
     };
 

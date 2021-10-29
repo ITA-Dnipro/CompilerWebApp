@@ -30,7 +30,9 @@ impl Compiler for CppCompiler {
 
         let compiler_output = Command::new("g++")
                 //.current_dir(path)
-                .args(&[&input_data.compiler_options, "-o", &full_bin_filename, &input_data.source_code_filepath])
+                .args(&[&input_data.compiler_options, 
+                    "-o", &full_bin_filename, 
+                    input_data.source_code_filepath.to_str().unwrap()])
                 .output()
                 .expect("failed to execute process");
     
