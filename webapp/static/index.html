@@ -15,15 +15,23 @@
         <main>
             <div id="editor">
             </div>
-            <form>
+            <form id="source-code-form" action="/submit">
                 <input id="file_input" type="file" onchange="handleLoadedFile()"/>
+                <div>
+                    <label for="lang-input"> language </label>
+                    <input id="lang-input" name="lang" list="compilers-list" value="c++"/>
+                </div>
+                <datalist id="compilers-list">
+                    <option> c++ </option>
+                </datalist>
+                <input id="options-input" name="options" type="text" placeholder="compiler options"/>
                 <input type="submit"/>            
             </form>
         </main>
         <footer>
 
         </footer>
-        <script src="js/editor.js">
-        </script>
+        <script src="js/editor.js" > </script>
+        <script src="js/submit_form.js" > </script>
     </body>
 </html>
