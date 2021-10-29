@@ -19,6 +19,7 @@ fn main() -> std::io::Result<()> {
     let input_data = InputData {
         compiler_type: CompilerType::Cpp,
         source_code_filepath: String::from("./temp/src/test.cpp"),
+        compiler_options: String::from("-g"),
     };
 
     let output_data = run_compilation(&input_data);

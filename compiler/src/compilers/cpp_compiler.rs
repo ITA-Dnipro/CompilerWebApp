@@ -26,9 +26,11 @@ impl Compiler for CppCompiler {
         let mut full_bin_filename = "./temp/bin/".to_owned();
         full_bin_filename.push_str(&bin_filename);
 
+        
+
         let compiler_output = Command::new("g++")
                 //.current_dir(path)
-                .args(["-o", &full_bin_filename, &input_data.source_code_filepath])
+                .args(&[&input_data.compiler_options, "-o", &full_bin_filename, &input_data.source_code_filepath])
                 .output()
                 .expect("failed to execute process");
     
