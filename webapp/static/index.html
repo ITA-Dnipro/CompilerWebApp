@@ -21,11 +21,10 @@
                 <input id="file_input" type="file" onchange="handleLoadedFile()"/>
                 <div>
                     <label for="lang-input"> language </label>
-                    <input id="lang-input" name="lang" list="compilers-list" value="c++"/>
+                    <select id=lang-input name="lang" required>
+                        <option> c++ </option>
+                    </select>
                 </div>
-                <datalist id="compilers-list">
-                    <option> c++ </option>
-                </datalist>
                 <input id="options-input" name="options" type="text" placeholder="compiler options"/>
                 <input type="submit"/>            
             </form>
