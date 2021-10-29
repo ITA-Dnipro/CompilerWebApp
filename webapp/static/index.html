@@ -13,23 +13,17 @@
 
         </header>
         <main>
-            <div id="editor">#include &lt;iostream&gt;
-
-using namespace std;
-
-int main()
-{
-    cout << "Hello from awesome site!!! << endl;
-    return 0;
-}
+            <div id="editor">
             </div>
-            <input type="submit"/>            
+            <form>
+                <input id="file_input" type="file" onchange="handleLoadedFile()"/>
+                <input type="submit"/>            
+            </form>
         </main>
         <footer>
 
         </footer>
         <script src="js/editor.js">
-
         </script>
     </body>
 </html>
