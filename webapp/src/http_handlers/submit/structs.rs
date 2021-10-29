@@ -11,7 +11,7 @@ pub struct InputCode
 #[derive(Serialize)]
 pub struct OutputCode
 {
-    pub stdin: String,
+    pub status_code: i32,
     pub stdout: String,
-    pub result: Vec<u8>
+    pub stderr: String
 }
