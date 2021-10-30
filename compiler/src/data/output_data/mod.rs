@@ -1,6 +1,15 @@
 pub mod header;
 pub mod result;
 
+use std::path::PathBuf;
+
+// Simplified structure for the very first step - based on Struct std::process::Output
+pub struct OutputData {
+    pub status_code: Option<i32>,
+    pub compiled_file_name: PathBuf,
+    pub stdout: Vec<u8>,
+    pub stderr: Vec<u8>, 
+}
 
 // TODO implement this complete structure 
 /*
@@ -12,11 +21,3 @@ pub struct OutputData {
     pub result: Result,
 }
 */
-
-// Simplified structure for the very first step - based on Struct std::process::Output
-pub struct OutputData {
-    pub is_succes: bool,
-    pub status_code: Option<i32>,
-    pub stdout: Vec<u8>,
-    pub stderr: Vec<u8>, 
-}

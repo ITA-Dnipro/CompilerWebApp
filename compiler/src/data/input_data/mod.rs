@@ -12,7 +12,8 @@ use self::compiler_type::CompilerType;
 
 pub struct InputData {
     pub compiler_type: CompilerType,
-    pub source_code_filepath: PathBuf,  
+    pub source_code_file_path: PathBuf,  
+    pub compiled_directory_path: PathBuf,
     pub compiler_options: String,
 }
 
