@@ -6,7 +6,7 @@ extern crate compiler;
 use std::env;
 use std::process::Command;
 use std::io::{self, Write};
-use std::path::Path;
+use std::path::PathBuf;
 
 
 use compiler::handler::run_compilation;
@@ -17,19 +17,23 @@ use compiler::data::input_data::compiler_type::CompilerType;
 fn main() -> std::io::Result<()> {
     println!("Hello from [compiler] crate!");
 
-    let input_data = InputData {
+    let mut input_data = InputData {
         compiler_type: CompilerType::Cpp,
-        //source_code_filepath: String::from("./temp/src/test.cpp"),
-        source_code_filepath: Box<Path::new("./temp/src/test.cpp")>,
+        source_code_filepath: PathBuf::from("./temp/src/test.cpp"),
         compiler_options: String::from("-g"),
     };
 
     let output_data = run_compilation(&input_data);
 
     println!("Compiling status: {}", output_data.status_code.unwrap());
+
+    println!("\nValue of stdout:");
     io::stdout().write_all(&output_data.stdout).unwrap();
+    println!("\nValue of stderr:");
     io::stderr().write_all(&output_data.stderr).unwrap();
     
+
+
     
     // TODO remove compiled bin file from directory (call "rm")
     

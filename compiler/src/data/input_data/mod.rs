@@ -4,7 +4,7 @@ pub mod options;
 pub mod source_code;
 
 
-use std::path::Path;
+use std::path::PathBuf;
 
 
 // Simplified structure for the very first step
@@ -12,7 +12,7 @@ use self::compiler_type::CompilerType;
 
 pub struct InputData {
     pub compiler_type: CompilerType,
-    pub source_code_filepath: Box<Path>,  
+    pub source_code_filepath: PathBuf,  
     pub compiler_options: String,
 }
 
