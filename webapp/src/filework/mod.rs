@@ -1,8 +1,10 @@
+#![allow(unused)]
 use std::fs::{File, remove_file};
 use std::io::{Write, Seek, SeekFrom};
 use std::env;
+use std::path::{PathBuf, Path};
 
-pub fn write_source_to_file(source_code: &str, lang: &str) -> String
+pub fn write_source_to_file(source_code: &str, lang: &str) -> PathBuf
 {
     // If error ever happens on work with temp files it's not on the user, 
     // so he should get "internal server error" here
@@ -23,11 +25,11 @@ pub fn write_source_to_file(source_code: &str, lang: &str) -> String
     
     drop(code_file);
 
-    input_file_name
+    PathBuf::from(input_file_name)
 }
 
-pub fn delete_file(filename: &str)
+pub fn delete_file(filename: &Path)
 {
-    remove_file(&filename)
-        .expect("Panic on deletion of input source code file");
+    remove_file(filename)
+        .expect("Panic on file deletion");
 }

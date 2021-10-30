@@ -9,3 +9,6 @@ edition = "2018"
 rocket = {version = "0.5.0-rc.1", features = ["json"]}
 serde = "1.0"
 chrono = "0.4.19"
+
+[dependencies.compiler]
+path = "../compiler"
