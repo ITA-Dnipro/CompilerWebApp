@@ -1,6 +1,7 @@
 #[macro_use] extern crate rocket;
 
 mod http_handlers;
+mod filework;
 
 use http_handlers::submit;
 use rocket::fs::FileServer;
