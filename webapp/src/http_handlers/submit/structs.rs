@@ -34,10 +34,8 @@ impl OutputData
         OutputData
         {
             status_code: data.status_code.unwrap_or(1),
-            stdout: String::from_utf8(data.stdout.clone())
-                .unwrap_or_default(),
-            stderr: String::from_utf8(data.stderr.clone())
-                .unwrap_or_default()
+            stdout: data.stdout.clone(),
+            stderr: data.stderr.clone()
         }
     }
 }
