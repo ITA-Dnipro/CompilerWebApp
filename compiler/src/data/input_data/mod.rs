@@ -17,6 +17,20 @@ pub struct InputData {
     pub compiler_options: String,
 }
 
+impl InputData {
+    pub fn new(compiler_type: CompilerType,
+               source_code_file_path: PathBuf,  
+               compiled_directory_path: PathBuf,
+               compiler_options: String) -> Self {
+        Self {
+            compiler_type,
+            source_code_file_path,
+            compiled_directory_path,
+            compiler_options
+        }
+    }
+}
+
 
 // TODO implement this complete structure 
 /*

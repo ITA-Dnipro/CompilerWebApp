@@ -7,8 +7,8 @@ use std::path::PathBuf;
 pub struct OutputData {
     pub status_code: Option<i32>,
     pub compiled_file_name: PathBuf,
-    pub stdout: Vec<u8>,
-    pub stderr: Vec<u8>, 
+    pub stdout: String,
+    pub stderr: String, 
 }
 
 // TODO implement this complete structure 
