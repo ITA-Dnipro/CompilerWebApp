@@ -19,8 +19,8 @@ impl Compiler for CppCompiler {
         let mut output_data = OutputData {
             status_code: Some(-1),
             compiled_file_name: PathBuf::from(""),
-            stdout: Vec::new(),
-            stderr: Vec::new(),
+            stdout: String::new(),
+            stderr: String::new(),
         };
 
         let bin_file_name = generate_filename().to_owned();
@@ -38,8 +38,8 @@ impl Compiler for CppCompiler {
     
         output_data.status_code = compiler_output.status.code();
         output_data.compiled_file_name = PathBuf::from(bin_file_name);
-        output_data.stderr = compiler_output.stderr;
-        output_data.stdout = compiler_output.stdout;
+        output_data.stdout = String::from_utf8(compiler_output.stdout.clone()).unwrap();
+        output_data.stderr = String::from_utf8(compiler_output.stderr.clone()).unwrap();
 
         output_data
     }

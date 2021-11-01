@@ -15,8 +15,8 @@ impl Compiler for RustCompiler {
         let output_data = OutputData {
             status_code: Some(-1),
             compiled_file_name: PathBuf::from(""),
-            stdout: Vec::new(),
-            stderr: Vec::new(),
+            stdout: String::new(),
+            stderr: String::new(),
         };
 
         //output_data.header = ...

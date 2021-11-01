@@ -3,7 +3,6 @@
 
 extern crate compiler;
 
-use std::io::{self, Write};
 use std::path::PathBuf;
 
 use compiler::handler::run_compilation;
@@ -25,10 +24,12 @@ fn main() -> std::io::Result<()> {
 
     println!(">> Compiling status: {}", output_data.status_code.unwrap());
     println!(">> Compiled file path: {}", output_data.compiled_file_name.into_os_string().into_string().unwrap());
+    
     println!(">> Value of stdout:");
-    io::stdout().write_all(&output_data.stdout).unwrap();
+    println!("{}", output_data.stdout);
+    
     println!(">> Value of stderr:");
-    io::stderr().write_all(&output_data.stderr).unwrap();
+    println!("{}", output_data.stderr);
     
     Ok(())
 }
