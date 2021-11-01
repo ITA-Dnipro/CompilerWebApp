@@ -13,10 +13,27 @@ function submitForm(event) {
             headers: {"Content-Type" : "application/json"}
         }
     )
-    fetch (request).then(
-        (response) => console.log(response)
-    )
-}
+    fetch (request)
+        .then (
+            (response) => {
+                    return response.json()
+            }
+        ).then (
+            (data_json) => {
+                console.log(data_json)
+                let div_error_message = document.getElementById("stderr-wrapper")
+                if (data_json["stderr"]) {
+                    div_error_message.innerHTML = '<div id="stderr" class="alert alert-danger">'
+                        + data_json["stderr"].toString()
+                    + '</div>'
+                }
+            }
+        )
+                
+}                
+
+
+
 
 document
     .getElementById("source-code-form")

@@ -18,6 +18,7 @@ main {
     display:flex;
     flex-direction: row;
     justify-content: space-around;
+    margin-bottom: 5px;
 }
 
 select {
@@ -30,4 +31,8 @@ select {
 
 #source-code-form #lang-input {
     width: 50px;
+}
+
+#stderr-wrapper {
+    width: 100%;
 }
