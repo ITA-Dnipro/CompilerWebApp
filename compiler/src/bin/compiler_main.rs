@@ -10,6 +10,7 @@ use compiler::handler::run_compilation;
 use compiler::data::input_data::InputData;
 use compiler::data::input_data::compiler_type::CompilerType;
 
+/// Use case of compiler - here: compiling cpp file
 fn main() -> std::io::Result<()> {
     println!("Hello from [compiler] crate!");
 
