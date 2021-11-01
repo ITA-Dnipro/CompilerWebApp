@@ -17,13 +17,8 @@ pub async fn post_submit(compilation_json: Json<structs::InputData>)
     // Compilation goes here
     let source_file = write_source_to_file(&compilation_json.code,
         &compilation_json.lang);
-    let compiler_input = InputData 
-    {
-        compiler_type: CompilerType::Cpp,
-        source_code_file_path: PathBuf::from(&source_file),
-        compiled_directory_path: PathBuf::from(source_file.parent().unwrap()),
-        compiler_options: compilation_json.options.clone()
-    };
+    let compiler_input = InputData::new(CompilerType::Cpp, PathBuf::from(&source_file),
+        PathBuf::from(source_file.parent().unwrap()), compilation_json.options.clone());
     // Compiler call
     let compilation_result = run_compilation(&compiler_input);
 
