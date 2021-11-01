@@ -29,18 +29,33 @@ impl Compiler for CppCompiler {
         full_bin_filename.push(&input_data.compiled_directory_path);
         full_bin_filename.push(&bin_file_name);
 
-        let compiler_output = Command::new("g++")
-                .args(&[&input_data.compiler_options, 
-                    "-o", &full_bin_filename.into_os_string().into_string().unwrap(), 
+        //let mut compiler_output = Command::new();
+
+        if input_data.compiler_options == "" {
+            let compiler_output = Command::new("g++")
+                .args(&["-o", &full_bin_filename.into_os_string().into_string().unwrap(), 
                     input_data.source_code_file_path.to_str().unwrap()])
                 .output()
                 .expect("failed to execute process");
-    
-        output_data.status_code = compiler_output.status.code();
-        output_data.compiled_file_name = PathBuf::from(bin_file_name);
-        output_data.stdout = String::from_utf8(compiler_output.stdout.clone()).unwrap();
-        output_data.stderr = String::from_utf8(compiler_output.stderr.clone()).unwrap();
 
+            output_data.status_code = compiler_output.status.code();
+            output_data.compiled_file_name = PathBuf::from(bin_file_name);
+            output_data.stdout = String::from_utf8(compiler_output.stdout.clone()).unwrap();
+            output_data.stderr = String::from_utf8(compiler_output.stderr.clone()).unwrap();
+        } else {
+            let compiler_output = Command::new("g++")
+            .args(&[&input_data.compiler_options, 
+                "-o", &full_bin_filename.into_os_string().into_string().unwrap(), 
+                input_data.source_code_file_path.to_str().unwrap()])
+            .output()
+            .expect("failed to execute process");
+
+            output_data.status_code = compiler_output.status.code();
+            output_data.compiled_file_name = PathBuf::from(bin_file_name);
+            output_data.stdout = String::from_utf8(compiler_output.stdout.clone()).unwrap();
+            output_data.stderr = String::from_utf8(compiler_output.stderr.clone()).unwrap();
+        }
+      
         output_data
     }
 

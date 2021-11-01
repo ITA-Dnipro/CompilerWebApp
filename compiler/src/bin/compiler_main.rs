@@ -18,6 +18,7 @@ fn main() -> std::io::Result<()> {
         source_code_file_path: PathBuf::from("./temp/src/test.cpp"),
         compiled_directory_path: PathBuf::from("./temp/bin/"), 
         compiler_options: String::from("-g"),
+        //compiler_options: String::new(),
     };
 
     let output_data = run_compilation(&input_data);
