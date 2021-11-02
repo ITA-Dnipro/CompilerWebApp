@@ -33,6 +33,6 @@ select {
     width: 50px;
 }
 
-#stderr-wrapper {
+.wide {
     width: 100%;
 }
