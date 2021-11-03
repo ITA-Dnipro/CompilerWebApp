@@ -13,6 +13,8 @@ pub struct CppCompiler {
 
 }
 
+
+// TODO return Result<..>
 impl Compiler for CppCompiler {
     fn compile(&self, input_data: &InputData) -> OutputData {
         
