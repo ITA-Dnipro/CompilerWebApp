@@ -3,9 +3,9 @@ function submitForm(event) {
     let error_div_id = 'stderr-wrapper'
     let output_div_id = 'stdout-wrapper'
     let obj = {}
-    obj["code"] = editor.getValue()
-    obj["lang"] = document.getElementById("lang-input").value
-    obj["options"] = document.getElementById("options-input").value
+    obj.code = editor.getValue()
+    obj.lang = document.getElementById("lang-input").value
+    obj.options = document.getElementById("options-input").value
     let request = new Request(
         event.target.action,
         {
@@ -23,8 +23,8 @@ function submitForm(event) {
         ).then (
             (data_json) => {
                 console.log(data_json)
-                buildStdoutBlock(output_div_id, data_json['stdout'])
-                buildStderrBlock(error_div_id, data_json['stderr'])
+                buildStdoutBlock(output_div_id, data_json.stdout)
+                buildStderrBlock(error_div_id, data_json.stderr)
             }
         )       
 }               
@@ -32,9 +32,10 @@ function submitForm(event) {
 function buildStdoutBlock(output_div_id, output_message) {
     let div_output_message = document.getElementById(output_div_id)
     if (output_message) {
-        div_output_message.innerHTML = '<div id="stdout" class="alert alert-secondary">'
-            + output_message.toString()
-            + '</div>'
+        div_output_message.innerHTML = 
+            '<div id="stdout" class="alert alert-secondary">' + 
+            output_message.toString() + 
+            '</div>'
     } else {
         div_output_message.innerHTML = ''
     }
@@ -43,9 +44,10 @@ function buildStdoutBlock(output_div_id, output_message) {
 function buildStderrBlock(error_div_id, error_message) {
     let div_error_message = document.getElementById(error_div_id)
     if (error_message) {
-        div_error_message.innerHTML = '<div id="stderr" class="alert alert-danger">'
-            + error_message.toString()
-        + '</div>'
+        div_error_message.innerHTML = 
+            '<div id="stderr" class="alert alert-danger">' + 
+            error_message.toString() + 
+            '</div>'
     } else {
         div_error_message.innerHTML = ''
     }
