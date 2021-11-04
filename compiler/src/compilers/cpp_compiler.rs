@@ -18,6 +18,9 @@ pub struct CppCompiler {
 impl Compiler for CppCompiler {
     fn compile(&self, input_data: &InputData) -> Result<OutputData, &'static str> {
         
+
+
+
         // TODO Check compiler existence
         let mut is_compiler_exists = true;
 
@@ -32,17 +35,19 @@ impl Compiler for CppCompiler {
             stderr: String::new(),
         };
 
+        output_data.stdout.push_str("Compilation started...");
+
         let bin_file_name = generate_filename().to_owned();
+
+        output_data.stdout.push_str("Binary file name generated...");
         
         let mut full_bin_filename = PathBuf::new();
         full_bin_filename.push(&input_data.compiled_directory_path);
         full_bin_filename.push(&bin_file_name);
 
-        //let mut compiler_output = Command::new();
-
         if input_data.compiler_options == "" {
             let compiler_output = Command::new("g++")
-                .args(&["-o", &full_bin_filename.into_os_string().into_string().unwrap(), 
+                .args(&["-v", "-o", &full_bin_filename.into_os_string().into_string().unwrap(), 
                     input_data.source_code_file_path.to_str().unwrap()])
                 .output()
                 .expect("failed to execute process");
@@ -50,11 +55,12 @@ impl Compiler for CppCompiler {
             output_data.status_code = compiler_output.status.code();
             output_data.compiled_file_name = PathBuf::from(bin_file_name);
             output_data.stdout = String::from_utf8(compiler_output.stdout.clone()).unwrap();
+            output_data.stdout.push_str(&format!("\nCompilation finished with code: {:?}\n", &output_data.status_code.unwrap()));
             output_data.stderr = String::from_utf8(compiler_output.stderr.clone()).unwrap();
         } else {
             let compiler_output = Command::new("g++")
             .args(&[&input_data.compiler_options, 
-                "-o", &full_bin_filename.into_os_string().into_string().unwrap(), 
+                "-v", "-o", &full_bin_filename.into_os_string().into_string().unwrap(), 
                 input_data.source_code_file_path.to_str().unwrap()])
             .output()
             .expect("failed to execute process");
@@ -62,6 +68,7 @@ impl Compiler for CppCompiler {
             output_data.status_code = compiler_output.status.code();
             output_data.compiled_file_name = PathBuf::from(bin_file_name);
             output_data.stdout = String::from_utf8(compiler_output.stdout.clone()).unwrap();
+            output_data.stdout.push_str(&format!("\nCompilation finished with code: {:?}\n", &output_data.status_code.unwrap()));
             output_data.stderr = String::from_utf8(compiler_output.stderr.clone()).unwrap();
         }
       
