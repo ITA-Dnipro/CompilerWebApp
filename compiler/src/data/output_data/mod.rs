@@ -21,3 +21,13 @@ pub struct OutputData {
     pub result: Result,
 }
 */
+impl OutputData {
+    pub fn new () -> Self {
+        OutputData { 
+            status_code: Some(-1), 
+            compiled_file_name: PathBuf::from(""), 
+            stdout: String::new(), 
+            stderr: String::new() 
+        }
+    }
+}
