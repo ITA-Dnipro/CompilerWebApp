@@ -42,12 +42,11 @@ use super::compilers::compiler::Compiler;
 /// println!(">> Value of stderr:");
 /// io::stderr().write_all(&output_data.stderr).unwrap();
 /// 
-pub fn run_compilation(input_data: &InputData) -> OutputData {
-    
-
+pub fn run_compilation(input_data: &InputData) -> Result<OutputData, &'static str> {
     let compiler = select_compiler(&input_data.compiler_type);
-    let output_data: OutputData = compiler.compile(input_data);
-    output_data
+
+    let output_data = compiler.compile(input_data)?;
+    Ok(output_data)
 }
 
 

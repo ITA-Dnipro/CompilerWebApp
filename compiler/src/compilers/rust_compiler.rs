@@ -11,7 +11,7 @@ pub struct RustCompiler {
 }
 
 impl Compiler for RustCompiler {
-    fn compile(&self, input_data: &InputData) -> OutputData {
+    fn compile(&self, input_data: &InputData) -> Result<OutputData, &'static str> {
         let output_data = OutputData {
             status_code: Some(-1),
             compiled_file_name: PathBuf::from(""),
@@ -23,7 +23,7 @@ impl Compiler for RustCompiler {
         //output_data.result = ...
 
 
-        output_data
+        Ok(output_data)
     }
 
 }
