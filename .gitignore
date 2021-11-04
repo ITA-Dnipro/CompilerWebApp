@@ -11,3 +11,6 @@ Cargo.lock
 
 # Webapp backend saved files folder
 webapp/tempdata
+
+# IDE related files
+.vscode/

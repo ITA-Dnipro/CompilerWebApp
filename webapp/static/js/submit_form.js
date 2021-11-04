@@ -2,15 +2,12 @@ function submitForm(event) {
     event.preventDefault()
     let error_div_id = 'stderr-wrapper'
     let output_div_id = 'stdout-wrapper'
-    let obj = {}
-    obj.code = editor.getValue()
-    obj.lang = document.getElementById("lang-input").value
-    obj.options = document.getElementById("options-input").value
+    let data_to_send = parseDataToSend()
     let request = new Request(
         event.target.action,
         {
             method: "POST",
-            body: JSON.stringify(obj),
+            body: JSON.stringify(data_to_send),
             headers: {"Content-Type" : "application/json"}
         }
     )
@@ -28,6 +25,14 @@ function submitForm(event) {
             }
         )       
 }               
+
+function parseDataToSend() {
+    return {
+        code: editor.getValue(),
+        lang: document.getElementById("lang-input").value,
+        options: document.getElementById("options-input").value
+    }
+}
 
 function buildStdoutBlock(output_div_id, output_message) {
     let div_output_message = document.getElementById(output_div_id)
