@@ -8,12 +8,14 @@ use super::super::
     }
 };
 use std::collections::HashSet;
+use super::super::flags_parser::cpp::CppParser;
 
 // Retuns LangInfo with information about c++
 pub fn construct() -> LangInfo
 {
     // List of prohibited flags
     let flags = [
+        Flag::Undefined,
         Flag::new_single_word("-o"),
         Flag::new_single_word("-v")
     ];
@@ -24,5 +26,5 @@ pub fn construct() -> LangInfo
         flags_set.insert(flag);
     }
 
-    LangInfo::new(Cpp, ".cpp", false, flags_set)
+    LangInfo::new(Cpp, ".cpp", false, flags_set, Box::new(CppParser {}))
 }

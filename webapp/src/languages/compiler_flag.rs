@@ -6,7 +6,9 @@ use std::hash::{Hash, Hasher};
 pub enum CompilerFlag   // Types of flags a compiler may take
 {
     // An undefined flag
-    Undefined(String),
+    Undefined,
+    // An undefined flag that stores it's text
+    UndefinedFlag(String),
     // A flag that consists of a single word
     SingleWordFlag(String),
     // A flag that consists of a key-value pair
@@ -31,9 +33,22 @@ impl PartialEq for CompilerFlag
         // Compare by keys and values
         match (self, other)
         {
-            (Undefined(value_self), Undefined(value_other)) => 
+            (Undefined, Undefined) => 
+            {
+                true
+            },
+            (Undefined, UndefinedFlag(_)) => 
+            {
+                true
+            },
+            (UndefinedFlag(_), Undefined) => 
+            {
+                true
+            },
+
+            (UndefinedFlag(self_value), UndefinedFlag(other_value)) => 
             { 
-                value_self == value_other
+                self_value == other_value
             }
             (SingleWordFlag(self_flag), SingleWordFlag(other_flag)) =>
             {
@@ -44,6 +59,7 @@ impl PartialEq for CompilerFlag
             {
                 self_key == other_key && self_value == other_value
             },
+
             // One to many comparison here is true if a range contains the element it's compared to
             (KeyValueFlag { key: self_key, value: self_value },  
                 KeyValuesFlag { key: other_key, values: other_values }) =>
@@ -72,13 +88,17 @@ impl Hash for CompilerFlag
         // Don't hash by a values of keys
         match self
         {   
-            CompilerFlag::Undefined(_) =>
+            CompilerFlag::Undefined => 
             {
-                self.hash(hasher);
+                0.hash(hasher);
             }
-            CompilerFlag::SingleWordFlag(_) =>
+            CompilerFlag::UndefinedFlag(value) =>
             {
-                self.hash(hasher);
+                value.hash(hasher);
+            }
+            CompilerFlag::SingleWordFlag(flag) =>
+            {
+                flag.hash(hasher);
             },
             CompilerFlag::KeyValueFlag { key, value: _ } =>
             {
