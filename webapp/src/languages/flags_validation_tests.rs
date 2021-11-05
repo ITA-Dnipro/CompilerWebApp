@@ -5,7 +5,8 @@ use super::compiler_flag::CompilerFlag as cf;
 #[test]
 fn valid_cpp_flags() {
     let cpp_info = cpp::construct();
-    assert!(FlagsValidator::validate(
+
+    assert!(FlagsValidator::new().validate(
         "-std=default", 
         &cpp_info))
 }
@@ -13,7 +14,7 @@ fn valid_cpp_flags() {
 #[test]
 fn prohibited_cpp_flags() {
     let cpp_info = cpp::construct();
-    assert!(!FlagsValidator::validate(
+    assert!(!FlagsValidator::new().validate(
         "-o somebadfolder/hehe.exe -key=value -key2=morevalue=case", 
         &cpp_info))
 }

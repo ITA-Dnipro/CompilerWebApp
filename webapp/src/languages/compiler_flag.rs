@@ -25,6 +25,38 @@ pub enum CompilerFlag   // Types of flags a compiler may take
     },
 }
 
+impl CompilerFlag
+{
+    pub fn new_single_word(flag: &str) -> CompilerFlag
+    {
+        CompilerFlag::SingleWordFlag(flag.to_owned())
+    }
+
+    pub fn new_key_value(key: &str, value: &str) -> CompilerFlag
+    {
+        CompilerFlag::KeyValueFlag 
+        {
+            key: key.to_owned(),
+            value: value.to_owned()
+        }
+    }
+
+    pub fn new_key_values(key: &str, values: &[&str]) -> CompilerFlag
+    {
+        let mut new_values = HashSet::<String>::new();
+        for value in values
+        {
+            new_values.insert(value.to_string());
+        }
+
+        CompilerFlag::KeyValuesFlag
+        {
+            key: key.to_owned(),
+            values: new_values
+        }
+    }
+}
+
 impl PartialEq for CompilerFlag
 {
     fn eq(&self, other: &CompilerFlag) -> bool
@@ -33,18 +65,9 @@ impl PartialEq for CompilerFlag
         // Compare by keys and values
         match (self, other)
         {
-            (Undefined, Undefined) => 
-            {
-                true
-            },
-            (Undefined, UndefinedFlag(_)) => 
-            {
-                true
-            },
-            (UndefinedFlag(_), Undefined) => 
-            {
-                true
-            },
+            (Undefined, Undefined) => true,
+            (Undefined, UndefinedFlag(_)) => true,
+            (UndefinedFlag(_), Undefined) => true,
 
             (UndefinedFlag(self_value), UndefinedFlag(other_value)) => 
             { 
@@ -112,34 +135,18 @@ impl Hash for CompilerFlag
     }
 }
 
-impl CompilerFlag
+impl ToString for CompilerFlag
 {
-    pub fn new_single_word(flag: &str) -> CompilerFlag
+    fn to_string(&self) -> String
     {
-        CompilerFlag::SingleWordFlag(flag.to_owned())
-    }
-
-    pub fn new_key_value(key: &str, value: &str) -> CompilerFlag
-    {
-        CompilerFlag::KeyValueFlag 
+        match self
         {
-            key: key.to_owned(),
-            value: value.to_owned()
-        }
-    }
-
-    pub fn new_key_values(key: &str, values: &[&str]) -> CompilerFlag
-    {
-        let mut new_values = HashSet::<String>::new();
-        for value in values
-        {
-            new_values.insert(value.to_string());
-        }
-
-        CompilerFlag::KeyValuesFlag
-        {
-            key: key.to_owned(),
-            values: new_values
+            CompilerFlag::Undefined => "Undefined".to_owned(),
+            CompilerFlag::UndefinedFlag(text) => text.to_owned(),
+            CompilerFlag::SingleWordFlag(flag) => flag.to_owned(),
+            CompilerFlag::KeyValueFlag { key, value } => format!("{}={}", key, value),
+            CompilerFlag::KeyValuesFlag { key, values} => format!("{}={}", key,
+                values.iter().map(|val| val.to_owned() + "|").collect::<String>())
         }
     }
 }
