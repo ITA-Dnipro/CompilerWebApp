@@ -10,6 +10,7 @@ use std::path::PathBuf;
 // Simplified structure for the very first step
 use self::compiler_type::CompilerType;
 
+// TODO make fields private
 pub struct InputData {
     pub compiler_type: CompilerType,
     pub source_code_file_path: PathBuf,  
