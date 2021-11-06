@@ -56,7 +56,12 @@ fn try_to_compile(compilation_data: &structs::InputData, lang_info: &LangInfo)
             PathBuf::from(source_file.parent().unwrap()), 
             compilation_data.options.clone());
         // Compiler call
-        let compilation_result = run_compilation(&compiler_input);
+        let compilation_result;
+        match run_compilation(&compiler_input)
+        {
+            Ok(comp_result) => compilation_result = comp_result,
+            Err(err_msg) => return Ok(structs::OutputData::new(-1, "", err_msg))
+        }
 
         delete_file(&source_file);
         if compilation_result.status_code.unwrap() == 0
