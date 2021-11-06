@@ -19,7 +19,7 @@ use super::compilers::compiler::Compiler;
 /// * A struct that holds compiled binary file and specific compiler output (stdout, stderr)
 /// 
 /// 
-/// # Examples
+/// # Example
 ///
 /// ```
 /// 
@@ -42,14 +42,36 @@ use super::compilers::compiler::Compiler;
 /// println!(">> Value of stderr:");
 /// io::stderr().write_all(&output_data.stderr).unwrap();
 /// 
-pub fn run_compilation(input_data: &InputData) -> OutputData {
-    
-
+pub fn run_compilation(input_data: &InputData) -> Result<OutputData, &'static str> {
     let compiler = select_compiler(&input_data.compiler_type);
-    let output_data: OutputData = compiler.compile(input_data);
-    output_data
+
+    let output_data = compiler.compile(input_data)?;
+    Ok(output_data)
 }
 
+
+/// Does selection of compiler depending on compiler type
+///
+/// # Arguments
+///
+/// * `compiler_type` - A enum valut that contains one of the possible type of compiler
+///
+/// # Result
+///
+/// * A box that holds selected compiler
+/// 
+/// 
+/// # Example
+///
+/// ```
+/// use super::data::input_data::compiler_type::CompilerType;
+/// 
+/// pub fn run_compilation(input_data: &InputData) -> OutputData {
+///     let compiler = select_compiler(&input_data.compiler_type);
+///     let output_data: OutputData = compiler.compile(input_data);
+///     output_data
+/// }
+/// 
 fn select_compiler(compiler_type: &CompilerType) -> Box<dyn Compiler> {
     match compiler_type {
         CompilerType::Cpp => {
