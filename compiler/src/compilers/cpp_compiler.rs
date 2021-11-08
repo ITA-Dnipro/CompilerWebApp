@@ -44,7 +44,11 @@ impl Compiler for CppCompiler {
         let mut compiler_command = Command::new("g++");
 
         if input_data.compiler_options != "" {
-            compiler_command.arg(&input_data.compiler_options);
+            for option in input_data.compiler_options.split(' ')
+            {
+                compiler_command.arg(option);
+                output_data.stdout.push_str(&format!("Compiler option added: {}\n", option));
+            }
         }
 
         compiler_command.arg(output_binary_argument);
