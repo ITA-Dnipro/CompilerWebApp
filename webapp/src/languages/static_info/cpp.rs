@@ -16,8 +16,7 @@ pub fn construct() -> LangInfo
     // List of prohibited flags
     let flags = [
         Flag::Undefined,
-        Flag::new_single_word("-o"),
-        Flag::new_single_word("-v")
+        Flag::new_single_word("-o")
     ];
     let mut flags_set = HashSet::new();
 
