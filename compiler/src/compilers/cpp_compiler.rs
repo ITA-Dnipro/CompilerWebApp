@@ -45,7 +45,7 @@ impl Compiler for CppCompiler {
             compiler_command.arg(&input_data.compiler_options);
         }
 
-        compiler_command.arg("-v");
+        //compiler_command.arg("-v");
         compiler_command.arg(output_binary_argument);
         compiler_command.arg(input_data.source_code_file_path.to_str().unwrap());
 
