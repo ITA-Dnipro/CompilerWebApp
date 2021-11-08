@@ -9,7 +9,7 @@
 /// 
 /// # Example
 ///
-/// ```
+/// ```ignore
 /// 
 /// use super::super::storage::name_generator::generate_filename;
 /// 

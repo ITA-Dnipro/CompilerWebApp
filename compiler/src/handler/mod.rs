@@ -21,7 +21,7 @@ use super::compilers::compiler::Compiler;
 /// 
 /// # Example
 ///
-/// ```
+/// ```ignore
 /// 
 /// use std::path::PathBuf;
 /// use compiler::handler::run_compilation;
@@ -63,7 +63,7 @@ pub fn run_compilation(input_data: &InputData) -> Result<OutputData, &'static st
 /// 
 /// # Example
 ///
-/// ```
+/// ```ignore
 /// use super::data::input_data::compiler_type::CompilerType;
 /// 
 /// pub fn run_compilation(input_data: &InputData) -> OutputData {
@@ -72,7 +72,7 @@ pub fn run_compilation(input_data: &InputData) -> Result<OutputData, &'static st
 ///     output_data
 /// }
 /// 
-fn select_compiler(compiler_type: &CompilerType) -> Box<dyn Compiler> {
+pub(crate) fn select_compiler(compiler_type: &CompilerType) -> Box<dyn Compiler> {
     match compiler_type {
         CompilerType::Cpp => {
             Box::new(CppCompiler {})
