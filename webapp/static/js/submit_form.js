@@ -39,7 +39,7 @@ function buildStdoutBlock(output_div_id, output_message) {
     if (output_message) {
         div_output_message.innerHTML = 
             '<div id="stdout" class="alert alert-secondary">' + 
-            output_message.toString() + 
+            output_message.toString().replace(/\n/g, '<br />') + 
             '</div>'
     } else {
         div_output_message.innerHTML = ''
@@ -51,7 +51,7 @@ function buildStderrBlock(error_div_id, error_message) {
     if (error_message) {
         div_error_message.innerHTML = 
             '<div id="stderr" class="alert alert-danger">' + 
-            error_message.toString() + 
+            error_message.toString().replace(/\n/g, '<br />') + 
             '</div>'
     } else {
         div_error_message.innerHTML = ''
