@@ -9,7 +9,7 @@ use super::super::data::input_data::InputData;
 use super::super::data::output_data::OutputData;
 use super::super::storage::name_generator::generate_filename;
 
-pub struct CppCompiler {
+pub(crate) struct CppCompiler {
 
 }
 

@@ -19,7 +19,7 @@
 /// So, ```bin_file_name``` holds ```"file-2021-11-01-08-35-26-518851300"```
 /// 
 
-pub fn generate_filename() -> String {
+pub(crate) fn generate_filename() -> String {
     let now = chrono::Utc::now();
     let filename = String::from(now.format("file-%Y-%m-%d-%H-%M-%S-%f").to_string());
     filename
