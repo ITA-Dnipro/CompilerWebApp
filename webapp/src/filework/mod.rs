@@ -3,33 +3,72 @@ use std::fs::{File, remove_file};
 use std::io::{Write, Seek, SeekFrom};
 use std::env;
 use std::path::{PathBuf, Path};
+use std::error::Error;
 
-pub fn write_source_to_file(source_code: &str, lang: &str) -> PathBuf
+pub fn write_source_to_file(source_code: &str, lang_extension: &str) -> Option<PathBuf>
 {
     // If error ever happens on work with temp files it's not on the user, 
     // so he should get "internal server error" here
-    let mut input_file_name = env::var("COMPILATION_TEMP_DIR")
-        .expect("COMPILATION_TEMP_DIR doesn't exist");
+    let mut input_file_name;
+    match env::var("COMPILATION_TEMP_DIR")
+    {
+        Ok(temp_dir) => input_file_name = temp_dir,
+        Err(_) => return None
+    }
+      
     input_file_name.push_str("/");
     input_file_name.push_str(
-        &chrono::Utc::now()
-        .format("compilation_input-%Y-%m-%d-%H-%M-%S-%f").to_string()
+        &("compilation_input-".to_owned() + &generate_file_signature())
     );
-    input_file_name.push_str(".cpp");     // TODO: add lang specific extensions
+    input_file_name.push_str(lang_extension);
+    let mut code_file: File;
+    match File::create(&input_file_name)
+    {
+        Ok(file) => code_file = file,
+        Err(_) =>
+        {
+            println!("[ERROR]: Couldn't create a file at \"{}\"", input_file_name);
+            return None;
+        }
+    }
+        
+    match code_file.write_all(source_code.as_bytes())
+        .and_then(|()| code_file.seek(SeekFrom::Start(0)))
+    {
+        Ok(_) => {},
+        Err(_) =>
+        {
+            println!("[ERROR]: Error while working with \"{}\"", input_file_name);
+            return None;
+        }
+    }
 
-    let mut code_file = File::create(&input_file_name)
-        .expect("Panic on temp file creation");  
-    code_file.write_all(source_code.as_bytes())
-        .expect("Panic on copying of source code into the temp file");
-    code_file.seek(SeekFrom::Start(0)).expect("Panic on temp file seek");
-    
-    drop(code_file);
-
-    PathBuf::from(input_file_name)
+    println!("[INFO]: Created \"{}\"", input_file_name);
+    Some(PathBuf::from(input_file_name))
 }
 
 pub fn delete_file(filename: &Path)
 {
-    remove_file(filename)
-        .expect("Panic on file deletion");
+    match remove_file(filename)
+    {
+        Ok(_) => println!("[INFO]: Removed {:?}.", filename),
+        Err(e) => println!("[ERROR]: Couldn't remove {:?}", filename)   
+    }    
+}
+
+fn generate_file_signature() -> String
+{
+    chrono::Utc::now()
+        .format("%Y-%m-%d-%H-%M-%S-%f").to_string()
+}
+
+#[cfg(test)]
+mod tests
+{
+    // Fail delete_file on purpose, it should not panic
+    #[test]
+    fn fail_delete()
+    {
+        super::delete_file(std::path::Path::new("Doesn't exits"));
+    }
 }
