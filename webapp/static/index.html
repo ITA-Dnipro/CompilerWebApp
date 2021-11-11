@@ -18,18 +18,20 @@
         <main>
             <div id="editor">
             </div>
-            <form id="source-code-form" action="/submit">
-                <input id="file_input" type="file" onchange="handleLoadedFile()"/>
-                <div>
-                    <label for="lang-input"> language </label>
-                    <select id=lang-input name="lang" required>
-                        <option> c++ </option>
-                        <option> rust </option>
-                    </select>
-                </div>
-                <input id="options-input" name="options" type="text" placeholder="compiler options"/>
-                <input type="submit"/>            
-            </form>
+            <div id="source-code-form-wrapper" >
+                <form id="source-code-form" action="/submit">
+                    <input id="file_input" type="file" onchange="handleLoadedFile()"/>
+                    <div>
+                        <label for="lang-input"> language </label>
+                        <select id=lang-input name="lang" required>
+                            <option> c++ </option>
+                            <option> rust </option>
+                        </select>
+                    </div>
+                    <input id="options-input" name="options" type="text" placeholder="compiler options"/>
+                    <input type="submit"/>            
+                </form>
+            </div>
             <div id="stdout-wrapper" class="wide"></div>
             <div id="stderr-wrapper" class="wide"></div>
             
