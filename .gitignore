@@ -11,3 +11,6 @@ Cargo.lock
 
 # Webapp backend saved files folder
 webapp/tempdata
+
+# shared objects, to compile ones use make
+*.so
