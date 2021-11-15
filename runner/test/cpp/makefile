@@ -15,6 +15,7 @@ all:
 	$(CXX) -shared -fpic $(CXX_FLAGS) $^ -o ../$(LIB)/libloop.so loop.cpp
 	$(CXX) -shared -fpic $(CXX_FLAGS) $^ -o ../$(LIB)/libremove_file.so remove_file.cpp
 	$(CXX) -shared -fpic $(CXX_FLAGS) $^ -o ../$(LIB)/libsimple_print.so simple_print.cpp
+	$(CXX) -shared -fpic $(CXX_FLAGS) $^ -o ../$(LIB)/libinput_output.so input_output.cpp
 
 run: clean all
 	clear

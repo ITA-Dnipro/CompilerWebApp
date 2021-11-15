@@ -1,4 +1,4 @@
-
+// TODO: predict memory manipulating
 
 #[cfg(test)]
 mod tests {
@@ -10,13 +10,14 @@ mod tests {
     const TEST_DIR: &str = "test/lib";
     #[test]
     fn casual_cpp() {
-        let handle = thread::spawn(
+        /*let handle = thread::spawn(
             || run_shared(
                 "test/lib/libcasual_cpp.so"
             )
         );
 
-        handle.join().unwrap();
+        handle.join().unwrap();*/
+        run_shared("test/lib/libcasual_cpp.so");
         assert!(true);
     }
 
@@ -30,10 +31,11 @@ mod tests {
                 .expect("Could not remove file");
         }
 
-        let handle = thread::spawn(
+        /*let handle = thread::spawn(
             || run_shared("test/lib/libcreate_new_file.so")
         );
-        handle.join().unwrap();
+        handle.join().unwrap();*/
+        run_shared("test/lib/libcreate_new_file.so");
         assert!(! file_path.exists());
     }
 
@@ -46,10 +48,11 @@ mod tests {
                 .expect("Could not create testfile.");
         }
         
-        let handle = thread::spawn( 
+        /*let handle = thread::spawn( 
             || run_shared("test/lib/libremove_file.so")
         );
-        handle.join().unwrap();
+        handle.join().unwrap();*/
+        run_shared("test/lib/libremove_file.so");
         let file_path = Path::new(TEST_DIR).join(FILE_NAME);
         assert!(file_path.exists());
     }

@@ -7,6 +7,7 @@ fn main() {
     //casual_cpp();
     file_is_not_created();
     //file_is_not_removed();
+    println!("Exit main");
 }
 
 fn casual_cpp() {
