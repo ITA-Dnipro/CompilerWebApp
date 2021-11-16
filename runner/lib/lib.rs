@@ -13,7 +13,7 @@ use std::io::stdout;
 #[no_mangle]
 pub fn run_shared(path_to_lib: &'static str) {
     //let (mut pipe_reader, pipe_writer) = pipe();
-    let forker  = fork();
+    let forked  = fork();
     match forked {
         Ok(Fork::Parent(child)) => {
             let mut child_status: i32 = -1;
@@ -28,21 +28,7 @@ pub fn run_shared(path_to_lib: &'static str) {
             println!("{}", i)
         }
     } 
-/*
-    let pid = unsafe { libc::fork() };
-    match pid {
-        0 => {
-            wrap_func_witch_seccomp(path_to_lib);
-            process::exit(0);
-        }
-        child_pid => {
-            let mut child_status: i32 = -1;
-            let pid_done = unsafe { libc::waitpid(child_pid, &mut child_status, 0) };
-            assert_eq!(pid_done, child_pid);
-            //assert!(libc::WIFSIGNALED(child_status));
-            //assert_eq!(libc::WTERMSIG(child_status), libc::SIGSYS);
-        }
-    }*/
+
 }
 
 fn wrap_func_witch_seccomp(path_to_lib: &str) {
