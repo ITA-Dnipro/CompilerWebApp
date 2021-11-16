@@ -1,21 +1,35 @@
 use std::collections::BTreeMap;
-use std::io::Read;
+use std::io::{Read, Write};
 use std::path::{Path};
+use std::slice::SliceIndex;
 use std::{str, process};
 use sharedlib::{Func, Lib, Symbol};
 use seccompiler::*;
-use shh;
-use std::process::Command;
-use std::process;
-use fork::{daemon, Fork};
+use fork::{fork, Fork};
+use pipe::pipe;
+use std::io::stdout;
+
 
 #[no_mangle]
 pub fn run_shared(path_to_lib: &'static str) {
-    
+    //let (mut pipe_reader, pipe_writer) = pipe();
+    let forker  = fork();
+    match forked {
+        Ok(Fork::Parent(child)) => {
+            let mut child_status: i32 = -1;
+            let pid_done = unsafe { libc::waitpid(child, &mut child_status, 0) };
+            
+        } ,
+        Ok(Fork::Child) => {
+            wrap_func_witch_seccomp(path_to_lib);
+            process::exit(0);
+        },
+        Err(i) => {
+            println!("{}", i)
+        }
+    } 
+/*
     let pid = unsafe { libc::fork() };
-    if let Ok(Fork::Child) = daemon(false, false ) { 
-
-    }
     match pid {
         0 => {
             wrap_func_witch_seccomp(path_to_lib);
@@ -28,7 +42,7 @@ pub fn run_shared(path_to_lib: &'static str) {
             //assert!(libc::WIFSIGNALED(child_status));
             //assert_eq!(libc::WTERMSIG(child_status), libc::SIGSYS);
         }
-    }
+    }*/
 }
 
 fn wrap_func_witch_seccomp(path_to_lib: &str) {
@@ -56,7 +70,7 @@ fn wrap_func_witch_seccomp(path_to_lib: &str) {
             .unwrap();
         
         let bpf_prog: BpfProgram = seccomp_filter.try_into().unwrap();
-        apply_filter(&bpf_prog).expect("Could not apply filter");
+        //apply_filter(&bpf_prog).expect("Could not apply filter");
         let seccomp_level = unsafe { libc::prctl(libc::PR_GET_SECCOMP) };
         //assert_eq!(seccomp_level, 2);
         shared_func();
