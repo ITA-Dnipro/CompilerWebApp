@@ -5,7 +5,7 @@ edition = "2021"
 
 [features]
 default = ["json"]
-json = ["serde", "serde_json"]
+json = ["serde", "serde_json", "seccompiler/json"]
 
 [[bin]]
 name = "runner"
@@ -26,7 +26,7 @@ path = "test/test.rs"
 pandora_box = "0.6.2"
 sharedlib = "7.0.0"
 libc = "0.2.1"
-seccompiler = "0.2.0"
+seccompiler = {version = "0.2.0", features=["json"] }
 shh = "1.0.1"
 fork = "0.1.18"
 pipe = "0.4.0"

@@ -4,20 +4,13 @@ use std::{thread};
 use std::path::{Path};
 const TEST_DIR: &str = "test/lib";
 fn main() {
-    //casual_cpp();
-    file_is_not_created();
-    //file_is_not_removed();
+    casual_cpp();
+    //file_is_not_created();
+    file_is_not_removed();
     println!("Exit main");
 }
 
 fn casual_cpp() {
-    /*let handle = thread::spawn(
-        || run_shared(
-            format!("{}/{}", TEST_DIR, "libcasual_cpp.so").as_str()
-        )
-    );*/
-
-    //handle.join().unwrap();
 
     run_shared(
         "test/lib/libcasual_cpp.so"

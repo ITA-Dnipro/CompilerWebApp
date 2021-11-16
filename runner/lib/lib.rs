@@ -1,23 +1,28 @@
 use std::collections::BTreeMap;
-use std::io::{Read, Write};
+use std::io::{Read};
 use std::path::{Path};
-use std::slice::SliceIndex;
 use std::{str, process};
 use sharedlib::{Func, Lib, Symbol};
 use seccompiler::*;
 use fork::{fork, Fork};
 use pipe::pipe;
-use std::io::stdout;
+use shh::{Shh};
 
 
 #[no_mangle]
 pub fn run_shared(path_to_lib: &'static str) {
     //let (mut pipe_reader, pipe_writer) = pipe();
+
+    let mut shh = shh::stdout().unwrap();
     let forked  = fork();
     match forked {
         Ok(Fork::Parent(child)) => {
             let mut child_status: i32 = -1;
             let pid_done = unsafe { libc::waitpid(child, &mut child_status, 0) };
+            let mut buf:Vec<u8> = Vec::new();          
+            shh.read_to_end(&mut buf).unwrap();
+            drop(shh);
+            println!("output: {:?}", str::from_utf8(&buf).unwrap());
             
         } ,
         Ok(Fork::Child) => {
