@@ -9,6 +9,10 @@ edition = "2018"
 rocket = {version = "0.5.0-rc.1", features = ["json"]}
 serde = "1.0"
 chrono = "0.4.19"
+slog = "2.7.0"
+slog-term = "2.8.0"
+slog-async = "2.7.0"
+uuid = { version = "*", features = ["v4"] }
 
 [dependencies.compiler]
 path = "../compiler"

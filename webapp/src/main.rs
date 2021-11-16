@@ -4,6 +4,12 @@ mod http_handlers;
 mod filework;
 mod languages;
 
+#[macro_use]
+extern crate slog;
+extern crate slog_term;
+extern crate slog_async;
+use slog::Drain;
+
 use std::env::{var, set_var, current_dir, args};
 use http_handlers::submit;
 use rocket::fs::FileServer;
@@ -22,10 +28,16 @@ fn rocket() -> _
 
     dir_check.join().expect("Fatal error while resolving temp dir path");
 
+    let decorator = slog_term::TermDecorator::new().build();
+    let drain = slog_term::FullFormat::new(decorator).build().fuse();
+    let drain = slog_async::Async::new(drain).build().fuse();
+    let log = slog::Logger::root(drain, o!());
+
     rocket::build()
         .mount("/", FileServer::from("static/"))
         .mount("/", routes![submit::post_submit])
         .manage(langs_info)
+        .manage(log)
 }
 
 fn check_temp_dir()

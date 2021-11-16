@@ -27,7 +27,6 @@ pub fn write_source_to_file(source_code: &str, lang_extension: &str) -> Option<P
         Ok(file) => code_file = file,
         Err(_) =>
         {
-            println!("[ERROR]: Couldn't create a file at \"{}\"", input_file_name);
             return None;
         }
     }
@@ -38,21 +37,21 @@ pub fn write_source_to_file(source_code: &str, lang_extension: &str) -> Option<P
         Ok(_) => {},
         Err(_) =>
         {
-            println!("[ERROR]: Error while working with \"{}\"", input_file_name);
+            drop(code_file);
+            delete_file(Path::new(&input_file_name));
             return None;
         }
     }
 
-    println!("[INFO]: Created \"{}\"", input_file_name);
     Some(PathBuf::from(input_file_name))
 }
 
-pub fn delete_file(filename: &Path)
+pub fn delete_file(filename: &Path) -> bool
 {
     match remove_file(filename)
     {
-        Ok(_) => println!("[INFO]: Removed {:?}.", filename),
-        Err(e) => println!("[ERROR]: Couldn't remove {:?}", filename)   
+        Ok(_) => true,
+        Err(e) => false
     }    
 }
 
