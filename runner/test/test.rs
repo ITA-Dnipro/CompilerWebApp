@@ -7,7 +7,7 @@ mod tests {
     use std::{thread};
     use std::path::{Path};
 
-    const TEST_DIR: &str = "test/lib";
+    const TEST_DIR: &str = "test/data";
     #[test]
     fn casual_cpp() {
         /*let handle = thread::spawn(
@@ -24,7 +24,7 @@ mod tests {
 
     #[test]
     fn file_is_not_created() {
-        const FILE_NAME: &str = "test/lib/new_file_created_with_so";
+        const FILE_NAME: &str = "test/data/new_file_created_with_so";
         let file_path = Path::new(FILE_NAME);
         if file_path.exists() {
             remove_file(FILE_NAME)

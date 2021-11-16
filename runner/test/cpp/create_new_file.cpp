@@ -10,7 +10,7 @@
 int main() 
 { 
     try {
-        auto filename = "test/lib/new_file_created_with_so";
+        auto filename = "test/data/new_file_created_with_so";
         std::cout << "main(). Create new file. " << "Filename: " << filename << std::endl; 
         std::ofstream output(filename);
         output << "Hello from shared object" << std::endl;
