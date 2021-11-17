@@ -2,7 +2,7 @@
 
 #[cfg(test)]
 mod tests {
-    use runner::run_shared;
+    use runner::run_user_prog;
     use std::fs::{remove_file, File};
     use std::{thread};
     use std::path::{Path};
@@ -10,14 +10,7 @@ mod tests {
     const TEST_DIR: &str = "test/data";
     #[test]
     fn casual_cpp() {
-        /*let handle = thread::spawn(
-            || run_shared(
-                "test/lib/libcasual_cpp.so"
-            )
-        );
-
-        handle.join().unwrap();*/
-        run_shared("test/lib/libcasual_cpp.so");
+        run_user_prog("test/lib/libcasual_cpp.so");
         assert!(true);
     }
 
@@ -30,12 +23,7 @@ mod tests {
             remove_file(FILE_NAME)
                 .expect("Could not remove file");
         }
-
-        /*let handle = thread::spawn(
-            || run_shared("test/lib/libcreate_new_file.so")
-        );
-        handle.join().unwrap();*/
-        run_shared("test/lib/libcreate_new_file.so");
+        run_user_prog("test/lib/libcreate_new_file.so");
         assert!(! file_path.exists());
     }
 
@@ -48,19 +36,35 @@ mod tests {
                 .expect("Could not create testfile.");
         }
         
-        /*let handle = thread::spawn( 
-            || run_shared("test/lib/libremove_file.so")
-        );
-        handle.join().unwrap();*/
-        run_shared("test/lib/libremove_file.so");
+        run_user_prog("test/lib/libremove_file.so");
         let file_path = Path::new(TEST_DIR).join(FILE_NAME);
         assert!(file_path.exists());
     }
 
     #[test]
+    fn prints_text() {
+        let output = run_user_prog("test/lib/libsimple_print.so");
+        match output {
+            Err(_) => assert!(false),
+            Ok(output_data) => {
+                assert_eq!("HI from main()!\n", output_data.stdout);
+            }
+        }
+    }
+
+    #[test]
+    fn fail_on_no_lib() {
+        let output = run_user_prog("no such lib");
+        match output {
+            Ok(_) => assert!(true),
+            Err(_) => assert!(false)
+        }
+    }
+
+    #[test]
     #[ignore]
     fn loop_cpp() {
-        run_shared("test/lib/libloop.so");
+        run_user_prog("test/lib/libloop.so");
         assert!(true);
     }
 }
