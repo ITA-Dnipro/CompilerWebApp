@@ -1,16 +1,14 @@
 // TODO: predict memory manipulating
-
 #[cfg(test)]
 mod tests {
     use runner::run_user_prog;
     use std::fs::{remove_file, File};
-    use std::{thread};
     use std::path::{Path};
 
     const TEST_DIR: &str = "test/data";
     #[test]
     fn casual_cpp() {
-        run_user_prog("test/lib/libcasual_cpp.so");
+        run_user_prog("test/lib/libcasual_cpp.so").unwrap();
         assert!(true);
     }
 
@@ -23,7 +21,7 @@ mod tests {
             remove_file(FILE_NAME)
                 .expect("Could not remove file");
         }
-        run_user_prog("test/lib/libcreate_new_file.so");
+        run_user_prog("test/lib/libcreate_new_file.so").unwrap();
         assert!(! file_path.exists());
     }
 
@@ -36,7 +34,7 @@ mod tests {
                 .expect("Could not create testfile.");
         }
         
-        run_user_prog("test/lib/libremove_file.so");
+        run_user_prog("test/lib/libremove_file.so").unwrap();
         let file_path = Path::new(TEST_DIR).join(FILE_NAME);
         assert!(file_path.exists());
     }
@@ -64,7 +62,7 @@ mod tests {
     #[test]
     #[ignore]
     fn loop_cpp() {
-        run_user_prog("test/lib/libloop.so");
+        run_user_prog("test/lib/libloop.so").unwrap();
         assert!(true);
     }
 }

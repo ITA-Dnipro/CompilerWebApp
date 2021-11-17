@@ -1,18 +1,21 @@
-use std::collections::BTreeMap;
 use std::io::{Read};
 use std::path::{Path};
 use std::{str, process};
 use sharedlib::{Func, Lib, Symbol};
-use seccompiler::{apply_filter, SeccompAction, SeccompFilter, BpfProgram, Error};
+use seccompiler::{BpfProgramRef, apply_filter};
 use fork::{fork, Fork};
-use shh::{Shh};
 mod data;
+mod filter;
 use crate::data::output::OutputData;
+use filter::build_filter;
+
 
 #[no_mangle]
 pub fn run_user_prog(path_to_lib: &'static str) -> Result<OutputData, &str> {
+    let bpf_prg = build_filter().unwrap();
     let mut shh_stdout = shh::stdout().unwrap();
     let mut shh_stderr = shh::stderr().unwrap();
+
     let forked  = fork();
     match forked {
         Ok(Fork::Parent(child)) => {
@@ -33,39 +36,33 @@ pub fn run_user_prog(path_to_lib: &'static str) -> Result<OutputData, &str> {
             return Ok(output_data);
         } ,
         Ok(Fork::Child) => {
-            wrap_func_witch_seccomp(path_to_lib);
+            wrap_func_witch_seccomp(path_to_lib, &bpf_prg);
             process::exit(0);
         },
-        Err(i) => {
+        Err(_i) => {
             return Err("Failed to launch user code");
         }
     } 
 }
 
-fn wrap_func_witch_seccomp(path_to_lib: &str) {
+fn wrap_func_witch_seccomp(path_to_lib: &str, bpf_prg: BpfProgramRef) {
     let path_to_lib = Path::new(path_to_lib)
         .canonicalize()
         .unwrap();
     unsafe {
         let lib = Lib::new(path_to_lib)
             .unwrap();
-        let shared_func_wrapper: Func<extern "C" fn() -> ::std::os::raw::c_int> = lib.find_func("main")
+        let shared_func_wrapper: Func<extern "C" fn() -> ::std::os::raw::c_int> 
+            = lib.find_func("main")
             .expect("Could not find func.");
         let shared_func = shared_func_wrapper.get();
+
         
-        let rules = BTreeMap::new();
-        let seccomp_filter = SeccompFilter::new(
-            rules,
-            SeccompAction::KillThread,
-            SeccompAction::Allow,
-            seccompiler::TargetArch::x86_64
-        )
-            .map_err(Error::Backend)
-            .unwrap();
-        
-        let bpf_prog: BpfProgram = seccomp_filter.try_into().unwrap();
-        apply_filter(&bpf_prog).expect("Could not apply filter");
-        shared_func();
+        match apply_filter(&bpf_prg) {
+            Ok(_) => shared_func(),
+            // TODO: research an option to return valuable exit code
+            Err(_) => process::exit(0)
+        };
     }
 }
 
