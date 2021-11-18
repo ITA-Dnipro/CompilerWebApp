@@ -36,9 +36,3 @@ serde_json = {version = "^1.0.9", optional = true}
 [dependencies.compiler]
 path = "../compiler"
 
-[build-dependencies]
-bindgen = "0.59.1"
-```suggestion
-bindgen = "0.59.1"
-```suggestion
-bindgen = "0.59.1"
