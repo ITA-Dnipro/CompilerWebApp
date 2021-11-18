@@ -38,3 +38,7 @@ path = "../compiler"
 
 [build-dependencies]
 bindgen = "0.59.1"
+```suggestion
+bindgen = "0.59.1"
+```suggestion
+bindgen = "0.59.1"
