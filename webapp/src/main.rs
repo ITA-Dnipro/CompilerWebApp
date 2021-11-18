@@ -10,11 +10,13 @@ extern crate slog_term;
 extern crate slog_async;
 use slog::Drain;
 
+use std::collections::hash_map::HashMap;
 use std::env::{var, set_var, current_dir, args};
-use http_handlers::submit;
+use std::sync::{Arc, Mutex};
 use rocket::fs::FileServer;
 use languages::{static_info::cpp, lang_info::LangInfo};
-use std::collections::hash_map::HashMap;
+
+use http_handlers::{submit, sessions::sessions_tracker::SessionsTracker};
 
 type LangsInfo = HashMap<String, LangInfo>;
 
@@ -22,21 +24,26 @@ type LangsInfo = HashMap<String, LangInfo>;
 fn rocket() -> _ 
 {
     let dir_check = std::thread::spawn(check_temp_dir);
-
+    // Relevant languages info
     let mut langs_info = LangsInfo::new();
     langs_info.insert("c++".to_owned(), cpp::construct());
 
-    dir_check.join().expect("Fatal error while resolving temp dir path");
+    // Sessions tracker
+    let sessions_tracker = Arc::new(Mutex::new(SessionsTracker::new()));
 
+    // Logger
     let decorator = slog_term::TermDecorator::new().build();
     let drain = slog_term::FullFormat::new(decorator).build().fuse();
     let drain = slog_async::Async::new(drain).build().fuse();
     let log = slog::Logger::root(drain, o!());
 
+    dir_check.join().expect("Fatal error while resolving temp dir path");
+
     rocket::build()
         .mount("/", FileServer::from("static/"))
         .mount("/", routes![submit::post_submit])
         .manage(langs_info)
+        .manage(sessions_tracker)
         .manage(log)
 }
 
@@ -63,7 +70,6 @@ fn check_temp_dir()
             {
                 println!("\"{}\" is not a valid directory path.", temp_dir);
             }
-
         },
         None => {}
     }

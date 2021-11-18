@@ -14,10 +14,12 @@ use std::path::PathBuf;
 use super::super::filework::*;
 use super::super::languages::{lang_info::LangInfo, flags_validator::FlagsValidator};
 
+use super::sessions::session::Session;
+
 // Submit code and get compilation results
 #[post("/submit", format = "json", data = "<compilation_json>")]
 pub async fn post_submit(compilation_json: Json<structs::InputData>,
-    langs_info: &State<LangsInfo>, logger: &State<Logger>) 
+    langs_info: &State<LangsInfo>, logger: &State<Logger>, session: Session) 
     -> Result<Json<structs::OutputData>, Custom<()>>
 {
     trace!(logger, "Entered post_submit");
