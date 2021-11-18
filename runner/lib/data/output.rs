@@ -1,7 +1,10 @@
+#[derive(Default)]
 #[derive(Debug)]
+// TODO: add valuable exit_code
 pub struct OutputData {
     pub stdout: String,
-    pub stderr: String
+    pub stderr: String,
+    pub exit_code: i32,
 }
 
 impl OutputData {
@@ -16,13 +19,14 @@ impl From<(&str, &str)> for OutputData {
     fn from((stdout, stderr): (&str, &str)) -> OutputData {
         OutputData {
             stdout: String::from(stdout), 
-            stderr: String::from(stderr)
+            stderr: String::from(stderr),
+            exit_code: 0
         }
     }
 }
 
 impl From<(String, String)> for OutputData {
     fn from((stdout, stderr): (String, String)) -> OutputData {
-        OutputData {stdout, stderr}
+        OutputData {stdout, stderr, exit_code: 0}
     }
 }

@@ -23,16 +23,18 @@ path = "test/test.rs"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-pandora_box = "0.6.2"
 sharedlib = "7.0.0"
 libc = "0.2.1"
 seccompiler = {version = "0.2.0", features=["json"] }
 shh = "1.0.1"
 fork = "0.1.18"
-pipe = "0.4.0"
+slog = "2.7.0"
 interprocess = "1.1.1"
 serde = {version = "1.0.130", features=["derive"], optional = true }
 serde_json = {version = "^1.0.9", optional = true}
+
+[dependencies.compiler]
+path = "../compiler"
 
 [build-dependencies]
 bindgen = "0.59.1"

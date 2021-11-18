@@ -17,7 +17,7 @@ pub fn build_filter() -> Result<BpfProgram, &'static str> {
     };
     assert!(Path::new(config_path.as_str()).exists());
     let mut filters = compile_from_json(
-        File::open("config/filters.json").unwrap(), 
+        File::open(config_path.as_str()).unwrap(), 
         TargetArch::x86_64
     ).expect("Cannot compile filters from json");
     // TODO: use preset string as func param
