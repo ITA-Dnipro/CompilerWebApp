@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use ::std::boxed::Box;
 
 use super::data::input_data::InputData;
@@ -6,7 +8,10 @@ use super::data::output_data::OutputData;
 use super::compilers::cpp_compiler::CppCompiler;
 use super::compilers::rust_compiler::RustCompiler;
 use super::compilers::compiler::Compiler;
+use super::options::{parse_compiler_options, filter_compiler_options};
 
+
+const OPTIONS_SEPARATOR: &str = r" ";
 
 /// Runs main compilation process
 ///
@@ -43,9 +48,85 @@ use super::compilers::compiler::Compiler;
 /// io::stderr().write_all(&output_data.stderr).unwrap();
 /// 
 pub fn run_compilation(input_data: &InputData) -> Result<OutputData, &'static str> {
-    let compiler = select_compiler(&input_data.compiler_type);
+    
+    let mut updated_input_data = InputData::new(
+        input_data.compiler_type.to_owned(), 
+        input_data.source_code_file_path.to_owned(), 
+        input_data.compiled_directory_path.to_owned(), 
+        input_data.compiler_options.to_owned());
 
-    let output_data = compiler.compile(input_data)?;
+  
+    
+    // Get options as string
+    let raw_options = input_data.compiler_options.clone();
+    // TODO add to logger
+    //println!("Example string: {}", BOTH_OPTIONS_EXAMPLE);
+    
+    // Get whitelist of options
+    // TODO use YAML config - figment crate
+    let mut options_whitelist: Vec<String> = Vec::new();
+    options_whitelist.push("-v".to_string());
+    options_whitelist.push("-va".to_string());
+
+    // Split options by "space"
+    let options: Vec<String> = raw_options.split(OPTIONS_SEPARATOR).map(|s| s.to_string()).collect();
+
+    // Parse each option ad extract key-s from "key and value" pairs or only "key"
+    let parsing_result = parse_compiler_options(&options);
+
+    
+    match parsing_result {
+        Ok(mut parsed_options) => {
+            let options_keys: Vec<String> = parsed_options.keys().map(|s| s.to_string()).collect();
+            
+            let filtering_result =  filter_compiler_options(&options_keys, &options_whitelist);
+    
+            match filtering_result {
+                Ok(declined_keys) => {
+                    let filtered_options: HashMap<String, String> = parsed_options.drain_filter(|k, _v| declined_keys.contains(k)).collect();           
+
+                    // TODO add to logger
+                    /*
+                    println!("Accepted options list:");
+            
+                    for option in filtered_options {
+                        println!("Option key: {}, option value: {}", option.0, option.1);
+                    }
+                    */
+
+                    let filtered_options_vector: Vec<String> = filtered_options.into_iter().map(|(key, value)| format!("{}={}", key, value)).collect();
+                    let filtered_options_string: String = filtered_options_vector.join(" ");
+
+                    updated_input_data.compiler_options = filtered_options_string;
+                }
+        
+                Err(_declined_keys) => {
+                    // TODO add to logger
+                    /*
+                    println!("Declined options list:");
+            
+                    for option in filtered_options {
+                        println!("Option: {}", option);
+                    }
+                    */
+                    return Err("Filtering options failed.")
+                }
+            }
+        }
+
+        Err(e) => {
+            // TODO add to logger
+            //println!("Parsing error: {}", e);
+            return Err(e);
+        }
+    }
+
+
+
+    
+    let compiler = select_compiler(&updated_input_data.compiler_type);
+
+    let output_data = compiler.compile(&updated_input_data)?;
     Ok(output_data)
 }
 
