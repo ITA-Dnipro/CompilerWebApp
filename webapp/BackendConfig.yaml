@@ -1,0 +1,5 @@
+sessions_data_dir: sessions_data/
+
+lang_extensions:
+  c++: .cpp
+  rust: .rs

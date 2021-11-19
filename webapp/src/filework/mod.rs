@@ -5,28 +5,31 @@ use std::env;
 use std::path::{PathBuf, Path};
 use std::error::Error;
 
-pub fn write_source_to_file(source_code: &str, lang_extension: &str) -> Option<PathBuf>
+pub fn write_source_to_file(
+    source_code: &str, 
+    lang_extension: &str,
+    parent_folder: &Path,
+    session_id: &str,
+    logger: &slog::Logger) 
+    -> Option<PathBuf>
 {
-    // If error ever happens on work with temp files it's not on the user, 
-    // so he should get "internal server error" here
-    let mut input_file_name;
-    match env::var("COMPILATION_TEMP_DIR")
-    {
-        Ok(temp_dir) => input_file_name = temp_dir,
-        Err(_) => return None
-    }
-      
-    input_file_name.push_str("/");
-    input_file_name.push_str(
-        &("compilation_input-".to_owned() + &generate_file_signature())
+    let input_file = parent_folder.to_owned().join(
+        &("source-".to_owned() + session_id + lang_extension)
     );
-    input_file_name.push_str(lang_extension);
+
+    if !input_file.is_absolute()
+    {
+        error!(logger, "File path is not valid: {:?}", input_file);
+        return None;
+    }
+
     let mut code_file: File;
-    match File::create(&input_file_name)
+    match File::create(&input_file)
     {
         Ok(file) => code_file = file,
         Err(_) =>
         {
+            error!(logger, "Couldn't create a file at {:?}", input_file);
             return None;
         }
     }
@@ -37,13 +40,14 @@ pub fn write_source_to_file(source_code: &str, lang_extension: &str) -> Option<P
         Ok(_) => {},
         Err(_) =>
         {
+            error!(logger, "Couldn't write to {:?}", input_file);
             drop(code_file);
-            delete_file(Path::new(&input_file_name));
+            delete_file(Path::new(&input_file));
             return None;
         }
     }
 
-    Some(PathBuf::from(input_file_name))
+    Some(PathBuf::from(input_file))
 }
 
 pub fn delete_file(filename: &Path) -> bool
