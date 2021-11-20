@@ -1,6 +1,9 @@
+use chrono::{DateTime, Utc};
 use rocket::{Request, http::{Cookie, CookieJar, Status},
     request::{self, FromRequest}};
-use std::{hash::{Hash, Hasher}, sync::{Arc, Mutex}};
+use std::{hash::{Hash, Hasher}, path::{Path, PathBuf}, sync::{Arc, Mutex}};
+
+use crate::{config_struct::BackendConfig, filework::new_session_folder};
 
 use super::sessions_tracker::SessionsTracker;
 
@@ -8,7 +11,9 @@ use super::sessions_tracker::SessionsTracker;
 #[derive(Eq, Clone)]
 pub struct Session
 {
-    pub id: u128
+    pub id: u128,
+    last_connection: DateTime<Utc>,
+    folder: PathBuf
 }
 
 impl Session
@@ -17,23 +22,48 @@ impl Session
     {
         Session
         {
-            id
+            id,
+            last_connection: Utc::now(),
+            folder: PathBuf::new()
         }
     }
 
-    pub(crate) fn establish_new(cookies: &CookieJar, tracker: &mut SessionsTracker,
-        logger: &slog::Logger) -> Option<u128>
+    pub fn folder(mut self, parent_folder: &Path) -> Session
+    {
+        self.folder = parent_folder.to_owned();
+        self
+    }
+
+    pub(crate) fn establish_new(
+        cookies: &CookieJar<'_>, 
+        tracker: &mut SessionsTracker,
+        parent_folder: &Path,
+        logger: &slog::Logger) 
+        -> Option<u128>
     {
         let session_id = uuid::Uuid::new_v4().as_u128();
-
-        if let false = tracker.insert_session(Session {
-            id: session_id
-        })
+        let session_id_str = session_id.to_string();
+        let folder;
+        match new_session_folder(parent_folder, &session_id_str,
+            logger)
+        {
+            Some(new_folder) => 
+            {
+                folder = new_folder;
+            },
+            None => 
+            {
+                return None;
+            }
+        }
+        
+        if let false = tracker.insert_session(Session::with_id(session_id)
+            .folder(&folder))
         {
             return None;
         }
 
-        cookies.add(Cookie::new("session_id", session_id.to_string()));
+        cookies.add(Cookie::new("session_id", session_id_str));
         info!(logger, "New session established: {}", session_id);
 
         Some(session_id)
@@ -49,8 +79,9 @@ impl<'r> FromRequest<'r> for Session
     {
         let logger = req.rocket().state::<slog::Logger>().unwrap();
         // TODO: there theoretically is a case when mutex locking fails
-        let mut sessions = req.rocket()
-            .state::<Arc<Mutex<SessionsTracker>>>().unwrap().lock().unwrap();  
+        let mut tracker = req.rocket()
+            .state::<Arc<Mutex<SessionsTracker>>>().unwrap().lock().unwrap();
+        let config = req.rocket().state::<BackendConfig>().unwrap();
 
         match req.cookies().get("session_id")
         {
@@ -67,20 +98,21 @@ impl<'r> FromRequest<'r> for Session
                     {
                         info!(logger, "Corrupted session ID");
 
-                        match Session::establish_new(req.cookies(),
-                        &mut sessions, logger)
+                        match Session::establish_new(req.cookies(),&mut tracker,
+                            &config.sessions_data_dir, logger)
                         {
-                            Some(session_id) =>  return request::Outcome::Success(Self { id: session_id }),
+                            Some(session_id) =>  return request::Outcome::Success(Self::with_id(session_id)),
                             None => 
                             {
                                 error!(logger, "Couldn't establish a session");
+
                                 return request::Outcome::Failure((Status::InternalServerError, ()))
                             }
                         }  
                     }
                 }
                   
-                match sessions.get_session(parsed_id)
+                match tracker.get_session(parsed_id)
                 {
                     Some(session) =>
                     {
@@ -90,24 +122,25 @@ impl<'r> FromRequest<'r> for Session
                     {
                         info!(logger, "Untracked session ID");
                         let session_id = Session::establish_new(req.cookies(),
-                        &mut sessions, logger).unwrap();
+                        &mut tracker, &config.sessions_data_dir, logger).unwrap();
 
-                        request::Outcome::Success(Self { id: session_id })
+                        request::Outcome::Success(Self::with_id(session_id))
                     }
                 }
             },
             None =>
             {
                 match Session::establish_new(req.cookies(),
-                    &mut sessions, logger)
+                    &mut tracker, &config.sessions_data_dir, logger)
+                {
+                    Some(session_id) =>  return request::Outcome::Success(Self::with_id(session_id)),
+                    None => 
                     {
-                        Some(session_id) =>  return request::Outcome::Success(Self { id: session_id }),
-                        None => 
-                        {
-                            error!(logger, "Couldn't establish a session");
-                            return request::Outcome::Failure((Status::InternalServerError, ()))
-                        }
-                    }  
+                        error!(logger, "Couldn't establish a session");
+                        
+                        return request::Outcome::Failure((Status::InternalServerError, ()))
+                    }
+                }  
             }
         }
     }

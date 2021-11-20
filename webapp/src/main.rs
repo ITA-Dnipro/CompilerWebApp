@@ -10,6 +10,7 @@ extern crate slog_term;
 extern crate slog_async;
 use figment::providers::Format;
 use figment::{Figment, providers::Yaml};
+use rocket::fairing::AdHoc;
 use slog::Drain;
 
 use std::env::current_dir;

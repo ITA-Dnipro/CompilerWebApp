@@ -1,16 +1,50 @@
-#![allow(unused)]
-use std::fs::{File, remove_file};
+use std::fs::{File, create_dir, remove_dir_all, remove_file};
 use std::io::{Write, Seek, SeekFrom};
-use std::env;
 use std::path::{PathBuf, Path};
-use std::error::Error;
 
-pub fn write_source_to_file(
+use slog::Logger;
+
+pub fn new_session_folder(
+    parent_folder: &Path, 
+    session_id: &str,
+    logger: &Logger
+) -> Option<PathBuf>
+{
+    let dir_name = parent_folder.join(session_id);
+    match create_dir(&dir_name)
+    {
+        Ok(_) => 
+        {
+            info!(logger, "Session folder created at: {:?}", dir_name);
+
+            Some(dir_name)
+        },
+        Err(_) =>
+        {
+            error!(logger, "Couldn't create a folder: {:?}", dir_name);
+
+            None
+        }
+    }
+}
+
+pub fn delete_folder(
+    folder: &Path
+) -> bool
+{
+    match remove_dir_all(folder)
+    {
+        Ok(_) => true,
+        Err(_) => false
+    }
+}
+
+pub fn save_source(
     source_code: &str, 
     lang_extension: &str,
     parent_folder: &Path,
     session_id: &str,
-    logger: &slog::Logger) 
+    logger: &Logger) 
     -> Option<PathBuf>
 {
     let input_file = parent_folder.to_owned().join(
@@ -35,7 +69,7 @@ pub fn write_source_to_file(
     }
         
     match code_file.write_all(source_code.as_bytes())
-        .and_then(|()| code_file.seek(SeekFrom::Start(0)))
+        .and_then(|_| code_file.seek(SeekFrom::Start(0)))
     {
         Ok(_) => {},
         Err(_) =>
@@ -55,14 +89,8 @@ pub fn delete_file(filename: &Path) -> bool
     match remove_file(filename)
     {
         Ok(_) => true,
-        Err(e) => false
+        Err(_) => false
     }    
-}
-
-fn generate_file_signature() -> String
-{
-    chrono::Utc::now()
-        .format("%Y-%m-%d-%H-%M-%S-%f").to_string()
 }
 
 #[cfg(test)]

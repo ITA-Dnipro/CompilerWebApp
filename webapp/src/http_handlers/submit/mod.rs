@@ -12,22 +12,25 @@ use compiler::handler::run_compilation;
 use super::super::BackendConfig;
 use std::path::Path;
 use super::super::filework::*;
-
 use super::sessions::session::Session;
 
 // Submit code and get compilation results
 #[post("/submit", format = "json", data = "<compilation_json>")]
-pub async fn post_submit(compilation_json: Json<structs::InputData>,
-    config: &State<BackendConfig>, logger: &State<Logger>, session: Session) 
+pub async fn post_submit(
+    compilation_json: Json<structs::InputData>,
+    config: &State<BackendConfig>, 
+    logger: &State<Logger>, 
+    session: Session) 
     -> Result<Json<structs::OutputData>, Custom<()>>
 {
     trace!(logger, "Entered post_submit");
     
     let source_file;
-    match write_source_to_file(&compilation_json.code,
+    let session_id_str = session.id.to_string();
+    match save_source(&compilation_json.code,
         &config.lang_extensions[&compilation_json.lang],
-        &Path::new(&config.sessions_data_dir),
-        &session.id.to_string(),
+        &Path::new(&config.sessions_data_dir.join(&session_id_str)),
+        &session_id_str,
         &logger)
     {
         Some(path) => source_file = path,
@@ -60,15 +63,15 @@ pub async fn post_submit(compilation_json: Json<structs::InputData>,
 
 fn try_to_compile(
     compilation_data: &structs::InputData, 
-    executable_path: &Path,
+    source_code: &Path,
     logger: &Logger)
     -> Result<structs::OutputData, ()>
 {
     // Compilation goes here
     // TODO: figure out how to properly deduce CompilerType from String
     let compiler_input = InputData::new(CompilerType::Cpp, 
-        executable_path.to_owned(),
-        executable_path.parent().unwrap().to_owned(), 
+        source_code.to_owned(),
+        source_code.parent().unwrap().to_owned(), 
         compilation_data.options.clone());
     // Compiler call
     let compilation_result;
@@ -78,16 +81,18 @@ fn try_to_compile(
         Err(err_msg) => 
         {
             error!(logger, "Compilation failed with error message: {}", err_msg);
+            
             return Ok(structs::OutputData::new(-1, "", err_msg));
         }
     }
-    // TODO: rework when user sessions will start actually serving data
-    delete_file(&executable_path);
-    if compilation_result.status_code.unwrap() == 0
-    {
-        // TODO: rework when compilation_result.compiled_file_name will contain full path
-        delete_file(&executable_path.parent().unwrap()
-            .join(&compilation_result.compiled_file_name));
-    }
+    // // TODO: rework when user sessions will start actually serving data
+    // delete_file(&source_code);
+    // if compilation_result.status_code.unwrap() == 0
+    // {
+    //     // TODO: rework when compilation_result.compiled_file_name will contain full path
+    //     delete_file(&source_code.parent().unwrap()
+    //         .join(&compilation_result.compiled_file_name));
+    // }
+
     Ok(structs::OutputData::from_compiler_result(&compilation_result))
 }
