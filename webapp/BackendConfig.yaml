@@ -1,4 +1,6 @@
 sessions_data_dir: sessions_data/
+session_life_duration: 5000   # 86400000
+sessions_cleanup_interval: 10000
 
 lang_extensions:
   c++: .cpp

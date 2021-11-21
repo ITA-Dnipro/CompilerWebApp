@@ -12,8 +12,8 @@ use super::sessions_tracker::SessionsTracker;
 pub struct Session
 {
     pub id: u128,
-    last_connection: DateTime<Utc>,
-    folder: PathBuf
+    pub last_connection: DateTime<Utc>,
+    pub folder: PathBuf
 }
 
 impl Session
@@ -116,6 +116,7 @@ impl<'r> FromRequest<'r> for Session
                 {
                     Some(session) =>
                     {
+                        // TODO: update last_connection field of the session
                         request::Outcome::Success(session.to_owned())
                     },
                     None =>  // Received cookie with untracked session id

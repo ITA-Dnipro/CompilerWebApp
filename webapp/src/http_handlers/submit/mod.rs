@@ -24,7 +24,7 @@ pub async fn post_submit(
     -> Result<Json<structs::OutputData>, Custom<()>>
 {
     trace!(logger, "Entered post_submit");
-    
+    // Source code saving
     let source_file;
     let session_id_str = session.id.to_string();
     match save_source(&compilation_json.code,
@@ -40,7 +40,7 @@ pub async fn post_submit(
         }
     }
     trace!(logger, "Source code file created: {:?}", source_file);
-
+    // Compilation
     let compilation_data = compilation_json.into_inner();
     if config.lang_extensions.contains_key(&compilation_data.lang)
     {
@@ -85,14 +85,6 @@ fn try_to_compile(
             return Ok(structs::OutputData::new(-1, "", err_msg));
         }
     }
-    // // TODO: rework when user sessions will start actually serving data
-    // delete_file(&source_code);
-    // if compilation_result.status_code.unwrap() == 0
-    // {
-    //     // TODO: rework when compilation_result.compiled_file_name will contain full path
-    //     delete_file(&source_code.parent().unwrap()
-    //         .join(&compilation_result.compiled_file_name));
-    // }
 
     Ok(structs::OutputData::from_compiler_result(&compilation_result))
 }
