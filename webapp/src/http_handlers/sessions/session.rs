@@ -57,12 +57,8 @@ impl Session
             }
         }
         
-        if let false = tracker.insert_session(Session::with_id(session_id)
-            .folder(&folder))
-        {
-            return None;
-        }
-
+        tracker.insert_session(Session::with_id(session_id)
+            .folder(&folder));
         cookies.add(Cookie::new("session_id", session_id_str));
         info!(logger, "New session established: {}", session_id);
 
@@ -111,12 +107,13 @@ impl<'r> FromRequest<'r> for Session
                         }  
                     }
                 }
-                  
-                match tracker.get_session(parsed_id)
+                
+                match tracker.get_mut_session(&parsed_id)
                 {
                     Some(session) =>
                     {
-                        // TODO: update last_connection field of the session
+                        session.last_connection = Utc::now();
+
                         request::Outcome::Success(session.to_owned())
                     },
                     None =>  // Received cookie with untracked session id
