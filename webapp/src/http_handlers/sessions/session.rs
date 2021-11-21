@@ -1,14 +1,14 @@
 use chrono::{DateTime, Utc};
 use rocket::{Request, http::{Cookie, CookieJar, Status},
     request::{self, FromRequest}};
+use serde::{Deserialize, Serialize};
 use std::{hash::{Hash, Hasher}, path::{Path, PathBuf}, sync::{Arc, Mutex}};
 
 use crate::{config_struct::BackendConfig, filework::new_session_folder};
-
 use super::sessions_tracker::SessionsTracker;
 
 // Anonymous session data guard
-#[derive(Eq, Clone)]
+#[derive(Eq, Clone, Serialize, Deserialize)]
 pub struct Session
 {
     pub id: u128,

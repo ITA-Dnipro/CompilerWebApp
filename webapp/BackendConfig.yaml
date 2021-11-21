@@ -1,6 +1,9 @@
 sessions_data_dir: sessions_data/
+sessions_data_file_dir: sessions_data/sessions_data.txt
+# Unit of measurement for time is a millisecond
 session_life_duration: 5000   # 86400000
 sessions_cleanup_interval: 10000
+sessions_save_interval: 20000
 
 lang_extensions:
   c++: .cpp
