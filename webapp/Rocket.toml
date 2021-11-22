@@ -1,0 +1,3 @@
+[global]
+# Comment next line out if you don't have or need TLS certificates
+tls = { certs = "certificates/server-cert.pem", key = "certificates/server-key.pem" }
