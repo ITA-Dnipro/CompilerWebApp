@@ -1,3 +1,4 @@
+#![feature(thread_is_running)]
 mod data;
 mod filter;
 mod runner;
@@ -22,7 +23,11 @@ pub fn run_code<'time>(
     logger: &'time Logger,
 ) -> Result<OutputData, &'static str> {
     let runner: Box<dyn Runner> = match lang {
-        CompilerType::Cpp => Box::new(CppRunner::new(object_path, logger)),
+        CompilerType::Cpp => {
+            let execution_limit = 1000;
+
+            Box::new(CppRunner::new(object_path, logger, execution_limit))
+        },
         _ => return Err("Not implemented"),
     };
 

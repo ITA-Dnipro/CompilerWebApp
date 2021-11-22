@@ -2,9 +2,11 @@
 #[cfg(test)]
 mod tests {
     use runner::run_code;
+    use slog::Duplicate;
     use std::fs::{remove_file, File};
     use compiler::data::input_data::compiler_type::{CompilerType};
-    use std::path::{Path};
+    use std::{path::{Path}, thread};
+    use std::time::Duration;
     use {slog, slog::o};
 
     const TEST_DIR: &str = "test/data";
@@ -85,13 +87,23 @@ mod tests {
     }
 
     #[test]
-    #[ignore]
     fn loop_cpp() {
         let root = slog::Logger::root(
             slog::Discard, 
             o!("key1" => "value1", "key2" => "value2")
         ); 
-        run_code(CPP, "test/lib/libloop.so", &root).unwrap();
-        assert!(true);
+        let handle  = thread::spawn(move || {       
+            run_code(CPP, "test/lib/libloop.so", &root).unwrap();
+            assert!(false);
+            return;
+            //std::process::exit(0);
+        });
+        match handle.join() {
+            Err(err) => println!("{:?}", err),
+            Ok(_) => {}
+        }
+        //handle.join().unwrap();
+        //thread::sleep(Duration::new(2, 0));
+        //panic!("shared function runs too long");
     }
 }
