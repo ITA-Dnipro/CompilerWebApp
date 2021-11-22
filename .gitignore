@@ -13,3 +13,7 @@ Cargo.lock
 webapp/sessions_data
 # TLS certificates
 webapp/certificates
+webapp/tempdata
+
+# shared objects, to compile ones use make
+*.so
