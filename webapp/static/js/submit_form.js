@@ -2,13 +2,17 @@ function submitForm(event) {
     event.preventDefault()
     let error_div_id = 'stderr-wrapper'
     let output_div_id = 'stdout-wrapper'
+    let run_output_div_id = 'run-stdout-wrapper'
     let data_to_send = parseDataToSend()
     let request = new Request(
         event.target.action,
         {
             method: "POST",
             body: JSON.stringify(data_to_send),
-            headers: {"Content-Type" : "application/json"}
+            headers: {
+                "Content-Type" : "application/json",
+                "execute" : document.getElementById("if-execute").checked
+            }
         }
     )
 
@@ -19,9 +23,14 @@ function submitForm(event) {
             }
         ).then (
             (data_json) => {
-                console.log(data_json)
                 buildStdoutBlock(output_div_id, data_json.stdout)
-                buildStderrBlock(error_div_id, data_json.stderr)
+                if ('runner_output' in data_json) {
+                    buildStdoutBlock(run_output_div_id, data_json.runner_output.stdout)
+                    buildStdoutBlock(error_div_id, data_json.runner_output.stderr)
+                } else {
+                    buildStdoutBlock(run_output_div_id, '')
+                    buildStderrBlock(error_div_id, data_json.stderr)
+                }
             }
         )       
 }               
@@ -33,6 +42,7 @@ function parseDataToSend() {
         options: document.getElementById("options-input").value
     }
 }
+
 
 function buildStdoutBlock(output_div_id, output_message) {
     let div_output_message = document.getElementById(output_div_id)
@@ -57,7 +67,6 @@ function buildStderrBlock(error_div_id, error_message) {
         div_error_message.innerHTML = ''
     }
 }
-
 
 
 
