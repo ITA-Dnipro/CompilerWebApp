@@ -66,7 +66,7 @@ pub fn run_compilation(input_data: &InputData) -> Result<OutputData, &'static st
     // TODO use YAML config - figment crate
     let mut options_whitelist: Vec<String> = Vec::new();
     options_whitelist.push("-v".to_string());
-    options_whitelist.push("-va".to_string());
+    options_whitelist.push("-Wall".to_string());
 
     // Split options by "space"
     let options: Vec<String> = raw_options.split(OPTIONS_SEPARATOR).map(|s| s.to_string()).collect();
