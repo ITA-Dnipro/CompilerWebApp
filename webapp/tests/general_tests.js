@@ -5,8 +5,7 @@ describe('Array', function(){
         let expected_empty_obj = {
           code: '',
           options: '',
-          lang: 'c++',
-          if_execute: false
+          lang: 'c++'
         }
         let parsed_object = parseDataToSend()
         chai.expect(expected_empty_obj).to.eql(parsed_object)
