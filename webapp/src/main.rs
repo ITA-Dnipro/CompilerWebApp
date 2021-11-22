@@ -2,19 +2,30 @@
 
 mod http_handlers;
 mod filework;
+mod languages;
 
+use std::env::{var, set_var, current_dir, args};
 use http_handlers::submit;
 use rocket::fs::FileServer;
-use std::env::{var, set_var, current_dir, args};
+use languages::{static_info::cpp, lang_info::LangInfo};
+use std::collections::hash_map::HashMap;
+
+type LangsInfo = HashMap<String, LangInfo>;
 
 #[launch]
 fn rocket() -> _ 
 {
-    check_temp_dir();
+    let dir_check = std::thread::spawn(check_temp_dir);
+
+    let mut langs_info = LangsInfo::new();
+    langs_info.insert("c++".to_owned(), cpp::construct());
+
+    dir_check.join().expect("Fatal error while resolving temp dir path");
 
     rocket::build()
         .mount("/", FileServer::from("static/"))
         .mount("/", routes![submit::post_submit])
+        .manage(langs_info)
 }
 
 fn check_temp_dir()

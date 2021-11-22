@@ -5,18 +5,22 @@ use std::env;
 use std::path::{PathBuf, Path};
 use std::error::Error;
 
-pub fn write_source_to_file(source_code: &str, lang: &str) -> Option<PathBuf>
+pub fn write_source_to_file(source_code: &str, lang_extension: &str) -> Option<PathBuf>
 {
     // If error ever happens on work with temp files it's not on the user, 
     // so he should get "internal server error" here
-    let mut input_file_name = env::var("COMPILATION_TEMP_DIR")
-        .expect("COMPILATION_TEMP_DIR doesn't exist");
+    let mut input_file_name;
+    match env::var("COMPILATION_TEMP_DIR")
+    {
+        Ok(temp_dir) => input_file_name = temp_dir,
+        Err(_) => return None
+    }
+      
     input_file_name.push_str("/");
     input_file_name.push_str(
         &("compilation_input-".to_owned() + &generate_file_signature())
     );
-    input_file_name.push_str(".cpp");     // TODO: add lang specific extensions
-
+    input_file_name.push_str(lang_extension);
     let mut code_file: File;
     match File::create(&input_file_name)
     {
