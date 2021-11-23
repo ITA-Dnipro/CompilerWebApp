@@ -20,7 +20,7 @@ fn to_hashset(vector: &Vec<String>) -> HashSet<String> {
 //     - return Ok(declined_options)
 // else (zero "accepted option")
 //     - return Err(declined_options)
-pub(crate) fn filter_compiler_options(options: &Vec<String>, options_whitelist: &Vec<String>) -> Result<Vec<String>, Vec<String>> {
+pub(crate) fn filter_compiler_options(options: &Vec<String>, options_whitelist: &Vec<String>) -> Result<Vec<String>, &'static str> {
     let options_set: HashSet<String>  = to_hashset(options);
     let options_whitelist_set: HashSet<String> = to_hashset(options_whitelist);
 
@@ -30,12 +30,7 @@ pub(crate) fn filter_compiler_options(options: &Vec<String>, options_whitelist: 
     let accepted_options: Vec<String> = accepted_options_set.into_iter().map(|s| s.to_string()).collect();    
     let declined_options: Vec<String> = declined_options_set.into_iter().map(|s| s.to_string()).collect();
 
-    if accepted_options.len() == 0 {
-        Err(declined_options)
-    } 
-    else {
-        Ok(declined_options)
-    }
+    Ok(declined_options)  
 }
 
 
