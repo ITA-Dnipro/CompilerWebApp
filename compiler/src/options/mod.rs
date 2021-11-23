@@ -24,10 +24,10 @@ pub(crate) fn filter_compiler_options(options: &Vec<String>, options_whitelist: 
     let options_set: HashSet<String>  = to_hashset(options);
     let options_whitelist_set: HashSet<String> = to_hashset(options_whitelist);
 
-    let accepted_options_set: HashSet<&String>  = options_set.intersection(&options_whitelist_set).collect();
+    //let accepted_options_set: HashSet<&String>  = options_set.intersection(&options_whitelist_set).collect();
     let declined_options_set: HashSet<&String> =  options_set.difference(&options_whitelist_set).collect();
 
-    let accepted_options: Vec<String> = accepted_options_set.into_iter().map(|s| s.to_string()).collect();    
+    //let accepted_options: Vec<String> = accepted_options_set.into_iter().map(|s| s.to_string()).collect();    
     let declined_options: Vec<String> = declined_options_set.into_iter().map(|s| s.to_string()).collect();
 
     Ok(declined_options)  

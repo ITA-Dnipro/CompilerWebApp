@@ -74,6 +74,8 @@ pub fn run_compilation(input_data: &InputData) -> Result<OutputData, &'static st
     // Parse each option ad extract key-s from "key and value" pairs or only "key"
     let parsing_result = parse_compiler_options(&options);
 
+    let mut options_vector: Vec<String>;
+    let mut declined_keys: Vec<String> = Vec::new();
     
     match parsing_result {
         Ok(mut parsed_options) => {
@@ -83,9 +85,6 @@ pub fn run_compilation(input_data: &InputData) -> Result<OutputData, &'static st
     
             match filtering_result {
                 Ok(declined_keys) => {
-                    let mut options_vector: Vec<String>
-
-
                     if declined_keys.len() > 0 {
                         let filtered_options: HashMap<String, String> = parsed_options.drain_filter(|k, _v| declined_keys.contains(k)).collect();     
                         
@@ -99,6 +98,7 @@ pub fn run_compilation(input_data: &InputData) -> Result<OutputData, &'static st
                         */   
                         
                         options_vector = filtered_options.into_iter().map(|(key, value)| format!("{}={}", key, value)).collect();
+
                     } 
                     else {
                         options_vector = parsed_options.into_iter().map(|(key, value)| format!("{}={}", key, value)).collect();
@@ -134,8 +134,12 @@ pub fn run_compilation(input_data: &InputData) -> Result<OutputData, &'static st
     
     let compiler = select_compiler(&updated_input_data.compiler_type);
 
-    let output_data = compiler.compile(&updated_input_data)?;
+    let mut output_data = compiler.compile(&updated_input_data)?;
     
+    output_data.stderr.push_str("Declined compiler options list:\n");
+    output_data.stderr.push_str(&declined_keys.join(", ").to_owned());
+    output_data.stderr.push_str("\n");
+
     Ok(output_data)
 }
 
