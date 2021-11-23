@@ -15,5 +15,8 @@ webapp/sessions_data
 webapp/certificates
 webapp/tempdata
 
+# IDE related files
+.vscode/
+
 # shared objects, to compile ones use make
 *.so
