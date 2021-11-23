@@ -14,6 +14,8 @@ use super::options::{parse_compiler_options, filter_compiler_options};
 use super::config::{Config, load_config};
 
 const OPTIONS_SEPARATOR: &str = r" ";
+
+const CONFIG_FILE_LOCAL_DIR: &str = r"Compiler/";
 const CONFIG_FILE_NAME: &str = r"CompilerConfig.yaml";
 
 /// Runs main compilation process
@@ -64,7 +66,7 @@ pub fn run_compilation(input_data: &InputData) -> Result<OutputData, &'static st
     // TODO add to logger
     //println!("Example string: {}", BOTH_OPTIONS_EXAMPLE);
     
-    let config_file_path: PathBuf = env::current_dir().unwrap().join(CONFIG_FILE_NAME);
+    let config_file_path: PathBuf = env::current_dir().unwrap().join(CONFIG_FILE_LOCAL_DIR).join(CONFIG_FILE_NAME);
     let config = load_config(config_file_path)?;
     let options_whitelist: Vec<String> = select_compiler_options_whitelist(&updated_input_data.compiler_type, &config);
 
