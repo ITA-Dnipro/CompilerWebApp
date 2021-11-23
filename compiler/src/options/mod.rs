@@ -70,7 +70,7 @@ pub(crate) fn parse_compiler_options(options: &Vec<String>) -> Result<HashMap<St
 fn extract_key_and_value(compiler_option: &String) -> Result<(String, String), &'static str> {
     if compiler_option.len() > 0 {
         lazy_static! {
-            static ref RE: Regex = Regex::new(r"/^-{1,2}((?P<key_with_value>[[:alpha:]]+)=(?P<value_with_key>.+))|(?P<single_key>[[:alpha:]]+)$").unwrap();
+            static ref RE: Regex = Regex::new(r"^-{1,2}((?P<key_with_value>[[:alpha:]]+)=(?P<value_with_key>.+))|(?P<single_key>[[:alpha:]]+)$").unwrap();
         }
                 
         let key_capture = RE.captures(compiler_option).and_then(|cap| {cap.name("key_with_value").map(|key| key.as_str())});
