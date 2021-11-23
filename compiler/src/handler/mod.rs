@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use std::env;
 use ::std::boxed::Box;
 
 use super::data::input_data::InputData;
@@ -9,9 +10,11 @@ use super::compilers::cpp_compiler::CppCompiler;
 use super::compilers::rust_compiler::RustCompiler;
 use super::compilers::compiler::Compiler;
 use super::options::{parse_compiler_options, filter_compiler_options};
+use super::config::load_config;
 
 
 const OPTIONS_SEPARATOR: &str = r" ";
+const CONFIG_FILE_NAME: &str = r"CompilerConfig.yaml";
 
 /// Runs main compilation process
 ///
@@ -55,18 +58,21 @@ pub fn run_compilation(input_data: &InputData) -> Result<OutputData, &'static st
         input_data.compiled_directory_path.to_owned(), 
         input_data.compiler_options.to_owned());
 
-  
     
-    // Get options as string
     let raw_options = input_data.compiler_options.clone();
+  
     // TODO add to logger
     //println!("Example string: {}", BOTH_OPTIONS_EXAMPLE);
     
-    // Get whitelist of options
-    // TODO use YAML config - figment crate
+    let config_file_path: PathBuf = env::current_dir().unwrap().join(CONFIG_FILE_NAME);
+    let config = load_config(config_file_path)?;
+    let mut options_whitelist: Vec<String> = select_compiler_options_whitelist(&updated_input_data.compiler_type, &config);
+    
+    /*
     let mut options_whitelist: Vec<String> = Vec::new();
     options_whitelist.push("-v".to_string());
     options_whitelist.push("-Wall".to_string());
+    */
 
     // Split options by "space"
     let options: Vec<String> = raw_options.split(OPTIONS_SEPARATOR).map(|s| s.to_string()).collect();
@@ -163,4 +169,19 @@ pub(crate) fn select_compiler(compiler_type: &CompilerType) -> Box<dyn Compiler>
             Box::new(RustCompiler {})
         }
     } 
+}
+
+
+pub(crate) fn select_compiler_options_whitelist(compiler_type: &CompilerType, config: &Config) -> Vec<String> {
+    match compiler_type {
+        CompilerType::Cpp => {
+            return (config.gcc.options_whitelist);
+        }
+
+        CompilerType::Rust => {
+            return (config.rustc.options_whitelist);
+        }
+    } 
+
+
 }
