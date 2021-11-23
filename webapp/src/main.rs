@@ -2,84 +2,116 @@
 
 mod http_handlers;
 mod filework;
-mod languages;
+mod config_struct;
 
-use std::env::{var, set_var, current_dir, args};
-use http_handlers::submit;
+#[macro_use]
+extern crate slog;
+extern crate slog_term;
+extern crate slog_async;
+use figment::providers::Format;
+use figment::{Figment, providers::Yaml};
+use rocket::fairing::AdHoc;
+use slog::Drain;
+
+use std::env::current_dir;
+use std::sync::{Arc, Mutex};
+use std::thread::{self, sleep};
+use std::time::Duration;
 use rocket::fs::FileServer;
-use languages::{static_info::cpp, lang_info::LangInfo};
-use std::collections::hash_map::HashMap;
+use config_struct::BackendConfig;
 
-type LangsInfo = HashMap<String, LangInfo>;
+use http_handlers::{submit, sessions::sessions_tracker::SessionsTracker};
 
 #[launch]
 fn rocket() -> _ 
 {
-    let dir_check = std::thread::spawn(check_temp_dir);
+    // Backend config loading
+    let mut backend_config: BackendConfig = Figment::new()
+        .merge(Yaml::file("BackendConfig.yaml"))
+        .extract().unwrap();
+    // TODO: cover cases when the path is already full
+    backend_config.sessions_data_dir = current_dir().unwrap()
+        .join(&backend_config.sessions_data_dir);
+    backend_config.sessions_data_file_dir = current_dir().unwrap()
+        .join(&backend_config.sessions_data_file_dir);
 
-    let mut langs_info = LangsInfo::new();
-    langs_info.insert("c++".to_owned(), cpp::construct());
+    // Logger
+    let decorator = slog_term::TermDecorator::new().build();
+    let drain = slog_term::FullFormat::new(decorator).build().fuse();
+    let drain = slog_async::Async::new(drain).build().fuse();
+    let log = slog::Logger::root(drain, o!());
 
-    dir_check.join().expect("Fatal error while resolving temp dir path");
+    // Sessions tracker, wrapped in a mutex because it has to be mutable across threads
+    let sessions_tracker;
+    match SessionsTracker::from_file( &backend_config.sessions_data_file_dir)
+    {
+        Some(tr) => 
+        {
+            info!(log, "Read sessions data from: {:?}", 
+                backend_config.sessions_data_file_dir);
+            sessions_tracker = Arc::new(Mutex::new(tr
+                .life_duration(&Duration::from_millis(backend_config.session_life_duration))));
+        }
+        None => 
+        {
+            info!(log, "Couldn't read sessions data from: {:?}", 
+                backend_config.sessions_data_file_dir);
+            sessions_tracker = Arc::new(Mutex::new(SessionsTracker::new()
+                .life_duration(&Duration::from_millis(backend_config.session_life_duration))))
+        }
+    }
+
+    info!(log, "Backend config:\n {:?}", backend_config);
 
     rocket::build()
         .mount("/", FileServer::from("static/"))
         .mount("/", routes![submit::post_submit])
-        .manage(langs_info)
-}
-
-fn check_temp_dir()
-{
-    let mut env_args = args();
-    env_args.next();    // Skip executable's path
-    let user_temp_folder = env_args.next();
-    
-    match user_temp_folder
-    {
-        Some(temp_dir) => 
-        {
-            println!("COMPILATION_TEMP_DIR specified by the user.");
-            // Check if the value is a dir path
-            if std::path::Path::new(&temp_dir).is_dir()
+        .manage(backend_config)
+        .manage(sessions_tracker)
+        .manage(log)
+        .attach(AdHoc::on_liftoff("Sessions cleaner", |rocket| Box::pin(async move 
             {
-                println!("Setting \"{}\" as COMPILATION_TEMP_DIR.", temp_dir);
-                set_var("COMPILATION_TEMP_DIR", temp_dir);
-
-                return;
-            }
-            else
-            {
-                println!("\"{}\" is not a valid directory path.", temp_dir);
-            }
-
-        },
-        None => {}
-    }
-
-    match var("COMPILATION_TEMP_DIR") 
-    {
-        Ok(temp_dir) => 
-        {
-            println!("COMPILATION_TEMP_DIR already exists.");
-            // Check if the value is a dir path
-            if std::path::Path::new(&temp_dir).is_dir()
-            {
-                return;
-            }
-            else
-            {
-                println!("\"{}\" is not a valid directory path.", temp_dir);
-            }
-        },
-        Err(_) => 
-        {
-            println!("Can't read COMPILATION_TEMP_DIR.");
-        }
-    }
-    // Set COMPILATION_TEMP_DIR with a default value
-    let mut temp_dir = current_dir().unwrap().to_str().unwrap().to_owned();
-    temp_dir.push_str("/tempdata");
-
-    println!("Using default path \"{}\".", temp_dir);
-    set_var("COMPILATION_TEMP_DIR", temp_dir);
+                let tracker = rocket.state::<Arc<Mutex<SessionsTracker>>>()
+                    .unwrap().to_owned();
+                // TODO: cloning logger here is probably not right, look into it more
+                let logger = rocket.state::<slog::Logger>().unwrap().to_owned();
+                let interval = rocket.state::<BackendConfig>()
+                    .unwrap().sessions_cleanup_interval;
+                info!(logger, "Sessions cleaner started");
+                
+                thread::spawn(move ||
+                {
+                    loop
+                    {
+                        sleep(std::time::Duration::from_millis(interval));
+                        let mut locked = tracker.lock().unwrap();
+                        let deleted = locked.delete_old();
+                        drop(locked);
+                        info!(logger, "Deleted {} old sessions", deleted);
+                    }
+                });
+            })))
+            .attach(AdHoc::on_liftoff("Sessions saver", |rocket| Box::pin(async move 
+                {
+                    let tracker = rocket.state::<Arc<Mutex<SessionsTracker>>>()
+                        .unwrap().to_owned();
+                    // TODO: cloning logger here is probably not right, look into it more
+                    let logger = rocket.state::<slog::Logger>().unwrap().to_owned();
+                    let config = rocket.state::<BackendConfig>().unwrap();
+                    let interval = config.sessions_save_interval;
+                    let save_path = config.sessions_data_file_dir.clone();
+                    info!(logger, "Sessions saver started");
+                    
+                    thread::spawn(move ||
+                    {
+                        loop
+                        {
+                            sleep(std::time::Duration::from_millis(interval));
+                            let locked = tracker.lock().unwrap();
+                            locked.save(&save_path);
+                            drop(locked);
+                            info!(logger, "Saved sessions data to a file");
+                        }
+                    });
+                })))
 }
