@@ -1,8 +1,8 @@
-use std::path::PathBuf;
+use serde::Deserialize;
 
-#[derive(Debug)]
+#[derive(Debug, Deserialize)]
 pub(crate) struct Common {
-    log_level: u32,
+    pub log_level: u32,
 }
 
 impl Common {

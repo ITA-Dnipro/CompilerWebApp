@@ -3,26 +3,23 @@ pub(crate) mod compiler;
 
 use std::path::{Path, PathBuf};
 use serde::Deserialize;
-use figment::Figment;
-//use figment::providers::{Format, Yaml};
+use figment::{Figment, providers::Yaml, providers::Format};
 
-use compiler::Compiler as CompilerConfig;
+use compiler::Compiler;
 use common::Common;
 
-//use self::common;
-//use self::language;
 
-#[derive(Debug)]
+#[derive(Debug, Deserialize)]
 pub (crate) struct Config {
-    common: Common,
-    gcc: CompilerConfig,
-    rustc: CompilerConfig,
+    pub common: Common,
+    pub gcc: Compiler,
+    pub rustc: Compiler,
 }
 
 impl Config {
     pub fn new(common: Common,
-               gcc: CompilerConfig,
-               rustc: CompilerConfig) -> Self {
+               gcc: Compiler,
+               rustc: Compiler) -> Self {
         Self {
             common,
             gcc,
@@ -34,10 +31,8 @@ impl Config {
 
 pub(crate) fn load_config(config_file_path: PathBuf) -> Result<Config, &'static str> {
     
-    let config: Config::new();
-    
-    if !Path::new(config_file_path).exists() {
-        config = load_default_config().unwrap(); 
+    if !Path::new(config_file_path.to_str().unwrap()).exists() {
+        let config = load_default_config().unwrap(); 
         return Ok(config)       
     }
     
@@ -51,33 +46,29 @@ pub(crate) fn load_config(config_file_path: PathBuf) -> Result<Config, &'static 
 
 pub(crate) fn load_default_config() -> Result<Config, &'static str> {
 
-    // gcc
+    // common
     let log_level: u32 = 1;
-    common: <Common as Trait>::new(log_level);
+    let common = Common::new(log_level);
 
+    // gcc
     let version = String::from("gcc 9.3.0");
-    let options_whitelist = Vec::new();
-    options_whitelist.push("-v");
-    options_whitelist.push("--version");
-    options_whitelist.push("--verbose");
-    options_whitelist.push("--Wall");
-    let cpp: CompilerConfig::new(common, options_whitelist);
+    let mut options_whitelist: Vec<String> = Vec::new();
+    options_whitelist.push("-v".to_owned());
+    options_whitelist.push("--version".to_owned());
+    options_whitelist.push("--verbose".to_owned());
+    options_whitelist.push("--Wall".to_owned());
+    let gcc = Compiler::new(version, options_whitelist);
     
     // rustc
-    let log_level: u32 = 1;
-    common: <Common as Trait>::new(log_level);
-
     let version = String::from("rustc 1.58.0-nightly");
-    let options_whitelist = Vec::new();
-    options_whitelist.push("-v");
-    options_whitelist.push("--version");
-    options_whitelist.push("--verbose");
-    options_whitelist.push("--Wall");
-    let rustc: CompilerConfig::new(common, options_whitelist);
-    
+    let mut options_whitelist: Vec<String> = Vec::new();
+    options_whitelist.push("-v".to_owned());
+    options_whitelist.push("--version".to_owned());
+    options_whitelist.push("--verbose".to_owned());
+    options_whitelist.push("--Wall".to_owned());
+    let rustc = Compiler::new(version, options_whitelist);
 
-
-    let config: Config::new(common, gcc, rustc);
+    let config = Config::new(common, gcc, rustc);
 
     Ok(config)
 }

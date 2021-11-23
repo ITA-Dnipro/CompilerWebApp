@@ -15,5 +15,5 @@ path = "src/bin/compiler_main.rs"
 chrono = "0.4"
 regex = "1"
 lazy_static = "1.4.0"
-serde = "1.0.130"
-figment = "0.10.6"
+serde = { version = "1.0.130", features = ["derive"] }
+figment = { version = "0.10.6", features = ["yaml", "test"] }

@@ -1,8 +1,11 @@
-#[derive(Debug)]
+use serde::Deserialize;
+
+#[derive(Debug, Deserialize)]
 pub(crate) struct Compiler {
-    version: String,
-    options_whitelist: Vec<String>,
+    pub version: String,
+    pub options_whitelist: Vec<String>,
 }
+
 
 impl Compiler {
     pub fn new(version: String,
