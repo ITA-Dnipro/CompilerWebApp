@@ -7,7 +7,7 @@ use super::super::data::input_data::InputData;
 use super::super::data::output_data::OutputData;
 use super::compiler::Compiler;
 
-pub struct RustCompiler {
+pub(crate) struct RustCompiler {
 
 }
 

@@ -9,25 +9,14 @@ use super::super::data::input_data::InputData;
 use super::super::data::output_data::OutputData;
 use super::super::storage::name_generator::generate_filename;
 
-pub struct CppCompiler {
+pub(crate) struct CppCompiler {
 
 }
 
 
-// TODO return Result<..>
 impl Compiler for CppCompiler {
     fn compile(&self, input_data: &InputData) -> Result<OutputData, &'static str> {
-        
 
-
-
-        // TODO Check compiler existence
-        let mut is_compiler_exists = true;
-
-        if !is_compiler_exists {
-            Err("Compiler does not exist.")?
-        }
-        
         let mut output_data = OutputData {
             status_code: Some(-1),
             compiled_file_name: PathBuf::from(""),
@@ -35,42 +24,46 @@ impl Compiler for CppCompiler {
             stderr: String::new(),
         };
 
-        output_data.stdout.push_str("Compilation started...");
+
+        output_data.stdout.push_str("Compilation started...\n");
 
         let bin_file_name = generate_filename().to_owned();
-
-        output_data.stdout.push_str("Binary file name generated...");
         
         let mut full_bin_filename = PathBuf::new();
         full_bin_filename.push(&input_data.compiled_directory_path);
         full_bin_filename.push(&bin_file_name);
+        
+        let mut output_binary_argument = String::from("-o");
+        output_binary_argument.push_str(&full_bin_filename.into_os_string().into_string().unwrap());
 
-        if input_data.compiler_options == "" {
-            let compiler_output = Command::new("g++")
-                .args(&["-v", "-o", &full_bin_filename.into_os_string().into_string().unwrap(), 
-                    input_data.source_code_file_path.to_str().unwrap()])
-                .output()
-                .expect("failed to execute process");
 
-            output_data.status_code = compiler_output.status.code();
-            output_data.compiled_file_name = PathBuf::from(bin_file_name);
-            output_data.stdout = String::from_utf8(compiler_output.stdout.clone()).unwrap();
-            output_data.stdout.push_str(&format!("\nCompilation finished with code: {:?}\n", &output_data.status_code.unwrap()));
-            output_data.stderr = String::from_utf8(compiler_output.stderr.clone()).unwrap();
-        } else {
-            let compiler_output = Command::new("g++")
-            .args(&[&input_data.compiler_options, 
-                "-v", "-o", &full_bin_filename.into_os_string().into_string().unwrap(), 
-                input_data.source_code_file_path.to_str().unwrap()])
-            .output()
-            .expect("failed to execute process");
+        output_data.stdout.push_str("Binary file name generated...\n");
+        
+        output_data.stdout.push_str("Running compiler...\n");
 
-            output_data.status_code = compiler_output.status.code();
-            output_data.compiled_file_name = PathBuf::from(bin_file_name);
-            output_data.stdout = String::from_utf8(compiler_output.stdout.clone()).unwrap();
-            output_data.stdout.push_str(&format!("\nCompilation finished with code: {:?}\n", &output_data.status_code.unwrap()));
-            output_data.stderr = String::from_utf8(compiler_output.stderr.clone()).unwrap();
+        let mut compiler_command = Command::new("g++");
+
+        if input_data.compiler_options != "" {
+            for option in input_data.compiler_options.split(' ')
+            {
+                compiler_command.arg(option);
+                output_data.stdout.push_str(&format!("Compiler option added: {}\n", option));
+            }
         }
+
+        compiler_command.arg(output_binary_argument);
+        compiler_command.arg(input_data.source_code_file_path.to_str().unwrap());
+
+        let compiler_output = compiler_command.output().expect("failed to execute process");
+
+
+        output_data.status_code = compiler_output.status.code();
+        output_data.compiled_file_name = PathBuf::from(bin_file_name);
+        
+        output_data.stdout.push_str(&String::from_utf8(compiler_output.stdout.clone()).unwrap());
+        output_data.stdout.push_str(&format!("Compilation finished with code: {:?}\n", &output_data.status_code.unwrap()));
+        
+        output_data.stderr = String::from_utf8(compiler_output.stderr.clone()).unwrap();        
       
         Ok(output_data)
     }
