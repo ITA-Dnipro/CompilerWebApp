@@ -74,19 +74,19 @@ pub(crate) fn load_default_config() -> Result<Config, &'static str> {
     // gcc
     let version = String::from("gcc 9.3.0");
     let mut options_whitelist: Vec<String> = Vec::new();
-    options_whitelist.push("v".to_owned());
-    options_whitelist.push("version".to_owned());
-    options_whitelist.push("verbose".to_owned());
-    options_whitelist.push("Wall".to_owned());
+    options_whitelist.push("-v".to_owned());
+    options_whitelist.push("--version".to_owned());
+    options_whitelist.push("--verbose".to_owned());
+    options_whitelist.push("-Wall".to_owned());
     let gcc = Compiler::new(version, options_whitelist);
     
     // rustc
     let version = String::from("rustc 1.58.0-nightly");
     let mut options_whitelist: Vec<String> = Vec::new();
-    options_whitelist.push("v".to_owned());
-    options_whitelist.push("version".to_owned());
-    options_whitelist.push("verbose".to_owned());
-    options_whitelist.push("Wall".to_owned());
+    options_whitelist.push("-v".to_owned());
+    options_whitelist.push("--version".to_owned());
+    options_whitelist.push("--verbose".to_owned());
+    options_whitelist.push("-Wall".to_owned());
     let rustc = Compiler::new(version, options_whitelist);
 
     let config = Config::new(common, gcc, rustc);

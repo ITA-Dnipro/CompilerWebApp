@@ -77,7 +77,7 @@ pub fn run_compilation(input_data: &InputData) -> Result<OutputData, &'static st
     // Parse each option ad extract key-s from "key and value" pairs or only "key"
     let parsing_result = parse_compiler_options(&options);
 
-    let options_vector: Vec<String>;
+    let accepted_options: Vec<String>;
     let mut declined_options: Vec<String> = Vec::new();
     
     match parsing_result {
@@ -89,18 +89,9 @@ pub fn run_compilation(input_data: &InputData) -> Result<OutputData, &'static st
             match filtering_result {
                 Ok(declined_keys) => {
                     if declined_keys.len() > 0 {
-                        let filtered_options: HashMap<String, String> = parsed_options.drain_filter(|k, _v| declined_keys.contains(k)).collect();     
+                        let raw_declined_options: HashMap<String, String> = parsed_options.drain_filter(|k, _v| declined_keys.contains(k)).collect();     
                         
-                        // TODO add to logger
-                        /*
-                            println!("Accepted options list:");
-            
-                            for option in filtered_options {
-                                println!("Option key: {}, option value: {}", option.0, option.1);
-                            }
-                        */   
-                        
-                        options_vector = filtered_options.into_iter()
+                        declined_options = raw_declined_options.into_iter()
                             .map( 
                                 |(key, value)| 
                                 if value.len() > 0 { 
@@ -109,22 +100,35 @@ pub fn run_compilation(input_data: &InputData) -> Result<OutputData, &'static st
                                 else { 
                                     format!("{}", key) 
                                 }).collect();
-                                
-                        declined_options = declined_keys.clone();
-
+                        
+                        // TODO add to logger
+                        /*
+                            println!("Declined options list:");
+            
+                            for option in declined_options {
+                                println!("Option key: {}, option value: {}", option.0, option.1);
+                            }
+                        */   
+                        
                     } 
-                    else {
-                        options_vector = parsed_options.into_iter().map(|(key, value)| format!("{}={}", key, value)).collect();
-                    }
+                   
+                    accepted_options = parsed_options.into_iter()
+                            .map(
+                                |(key, value)| 
+                                if value.len() > 0 { 
+                                    format!("{}={}", key, value)
+                                } 
+                                else { 
+                                    format!("{}", key) 
+                                }).collect();                   
 
-                    let options_string: String = options_vector.join(" ");                    
-                    updated_input_data.compiler_options = options_string;
+                    updated_input_data.compiler_options = accepted_options.join(" ");
 
                     // TODO add to logger
                     /*
-                    println!("Declined options list:");
+                    println!("Accepted options list:");
             
-                    for option in filtered_options {
+                    for option in accepted_options {
                         println!("Option: {}", option);
                     }
                     */
