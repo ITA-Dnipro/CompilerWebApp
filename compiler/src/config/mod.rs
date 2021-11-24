@@ -2,14 +2,16 @@ pub(crate) mod common;
 pub(crate) mod compiler;
 
 use std::path::{Path, PathBuf};
-use serde::Deserialize;
+use serde::{Serialize, Deserialize};
 use figment::{Figment, providers::Yaml, providers::Format};
+use std::fs;
+use serde_yaml;
 
 use compiler::Compiler;
 use common::Common;
 
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub (crate) struct Config {
     pub common: Common,
     pub gcc: Compiler,
@@ -33,6 +35,9 @@ pub(crate) fn load_config(config_file_path: PathBuf) -> Result<Config, &'static 
     
     if !Path::new(config_file_path.to_str().unwrap()).exists() {
         let config = load_default_config().unwrap(); 
+
+        write_config(&config, &config_file_path).unwrap();
+
         return Ok(config)       
     }
     
@@ -86,3 +91,20 @@ pub(crate) fn load_default_config() -> Result<Config, &'static str> {
     Ok(config)
 }
 
+
+pub(crate) fn write_config(config: &Config, file_path: &PathBuf) -> Result<(), ()> {
+    
+    let s = serde_yaml::to_string(config).unwrap();
+    
+    match fs::write(file_path, s) {
+        Ok(_) => {
+            return Ok(())
+        }
+
+        Err(_) => {
+            return Err(())
+        }
+    }
+
+    
+}

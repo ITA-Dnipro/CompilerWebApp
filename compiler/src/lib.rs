@@ -4,6 +4,7 @@
 extern crate lazy_static;
 extern crate chrono;
 extern crate serde;
+extern crate serde_yaml;
 extern crate figment;
 
 pub mod data;
