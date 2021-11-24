@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 
-use std::env;
 use ::std::boxed::Box;
 use std::path::PathBuf;
 
@@ -11,7 +10,7 @@ use super::compilers::cpp_compiler::CppCompiler;
 use super::compilers::rust_compiler::RustCompiler;
 use super::compilers::compiler::Compiler;
 use super::options::{parse_compiler_options, filter_compiler_options};
-use super::config::{Config, load_config, write_config};
+use super::config::{Config, load_config};
 
 const OPTIONS_SEPARATOR:    &str = r" ";
 const CONFIG_FILE_PATH:     &str = r"/etc/CompilerWebApp/Compiler/CompilerConfig.yaml";

@@ -41,13 +41,16 @@ pub(crate) fn load_config(config_file_path: PathBuf) -> Result<Config, &'static 
         return Ok(config)       
     }
     
-    match Figment::new().merge(Yaml::file(config_file_path)).extract() {
+    match Figment::new().merge(Yaml::file(config_file_path.clone())).extract() {
         Ok(config) => {
             return Ok(config)
         }
 
         Err(_) => {
             let config = load_default_config().unwrap(); 
+
+            write_config(&config, &config_file_path).unwrap();
+
             return Ok(config) 
         }
     }
