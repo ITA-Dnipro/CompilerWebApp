@@ -100,7 +100,16 @@ pub fn run_compilation(input_data: &InputData) -> Result<OutputData, &'static st
                             }
                         */   
                         
-                        options_vector = filtered_options.into_iter().map(|(key, value)| format!("{}={}", key, value)).collect();
+                        options_vector = filtered_options.into_iter()
+                            .map( 
+                                |(key, value)| 
+                                if value.len() > 0 { 
+                                    format!("{}={}", key, value)
+                                } 
+                                else { 
+                                    format!("{}", key) 
+                                }).collect();
+                                
                         declined_options = declined_keys.clone();
 
                     } 
