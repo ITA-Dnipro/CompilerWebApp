@@ -1,7 +1,9 @@
 use std::collections::HashMap;
 
+use std::env;
 use ::std::boxed::Box;
 use std::path::PathBuf;
+
 
 use super::data::input_data::InputData;
 use super::data::input_data::compiler_type::CompilerType;
@@ -13,7 +15,7 @@ use super::options::{parse_compiler_options, filter_compiler_options};
 use super::config::{Config, load_config};
 
 const OPTIONS_SEPARATOR:    &str = r" ";
-const CONFIG_FILE_PATH:     &str = r"/etc/CompilerWebApp/Compiler/CompilerConfig.yaml";
+const CONFIG_FILE_NAME:     &str = r"CompilerConfig.yaml";
 
 /// Runs main compilation process
 ///
@@ -63,8 +65,9 @@ pub fn run_compilation(input_data: &InputData) -> Result<OutputData, &'static st
     // TODO add to logger
     //println!("Example string: {}", BOTH_OPTIONS_EXAMPLE);
     
-    let config_file_path = PathBuf::from(CONFIG_FILE_PATH);
-
+    let mut config_file_path: PathBuf = env::current_dir().unwrap();
+    config_file_path = config_file_path.join(CONFIG_FILE_NAME);
+    
     let config = load_config(config_file_path)?;
     let options_whitelist: Vec<String> = select_compiler_options_whitelist(&updated_input_data.compiler_type, &config);
 
