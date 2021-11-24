@@ -2,8 +2,9 @@
 mod data;
 mod filter;
 mod runner;
-use std::{process, str};
+use std::{str};
 use crate::data::output::OutputData;
+use crate::data::error::Error;
 use compiler::data::input_data::compiler_type::CompilerType;
 use runner::{Runner, cpp_runner::CppRunner};
 use slog::Logger;
@@ -21,14 +22,16 @@ pub fn run_code<'time>(
     lang: CompilerType,
     object_path: &'static str,
     logger: &'time Logger,
-) -> Result<OutputData, &'static str> {
+) -> Result<OutputData, Error> {
     let runner: Box<dyn Runner> = match lang {
         CompilerType::Cpp => {
             let execution_limit = 1000;
 
             Box::new(CppRunner::new(object_path, logger, execution_limit))
         },
-        _ => return Err("Not implemented"),
+        _ => return Err(
+            Error::NotImplementedError(String::from("Not implemented"))
+        ),
     };
 
     runner.run()

@@ -2,11 +2,9 @@
 #[cfg(test)]
 mod tests {
     use runner::run_code;
-    use slog::Duplicate;
-    use std::fs::{remove_file, File};
+    use std::{fs::{remove_file, File}, io::Read};
     use compiler::data::input_data::compiler_type::{CompilerType};
-    use std::{path::{Path}, thread};
-    use std::time::Duration;
+    use std::{str, path::{Path}, thread};
     use {slog, slog::o};
 
     const TEST_DIR: &str = "test/data";
@@ -30,12 +28,12 @@ mod tests {
         ); 
         const FILE_NAME: &str = "test/data/new_file_created_with_so";
         let file_path = Path::new(FILE_NAME);
+        
         if file_path.exists() {
-            remove_file(FILE_NAME)
-                .expect("Could not remove file");
+            remove_file(FILE_NAME).unwrap();
         }
-        run_code(CPP,"test/lib/libcreate_new_file.so", &root).unwrap();
-        assert!(! file_path.exists());
+        run_code(CPP,"test/lib/libnew_file.so", &root).unwrap();
+        assert!(file_path.exists());
     }
 
     #[test]
@@ -81,8 +79,8 @@ mod tests {
         let output 
             = run_code(CPP, "no such lib", &root);
         match output {
-            Ok(_) => assert!(true),
-            Err(_) => assert!(false)
+            Ok(_) => assert!(false),
+            Err(_) => assert!(true)
         }
     }
 
@@ -94,7 +92,7 @@ mod tests {
         ); 
         let handle  = thread::spawn(move || {       
             run_code(CPP, "test/lib/libloop.so", &root).unwrap();
-            assert!(false);
+            //assert!(false);
             return;
             //std::process::exit(0);
         });
@@ -105,5 +103,33 @@ mod tests {
         //handle.join().unwrap();
         //thread::sleep(Duration::new(2, 0));
         //panic!("shared function runs too long");
+    }
+
+    #[test]
+    fn runtime_error() {
+        let root = slog::Logger::root(
+            slog::Discard, 
+            o!("key1" => "value1", "key2" => "value2")
+        ); 
+        let output = run_code(CPP, "test/lib/libruntime_error.so", &root).unwrap();
+        assert_eq!(output.stderr, "");
+    }
+    
+    #[test]
+    fn change_file_content() {
+        const CONTENT_FILE: &str = "test/data/file_with_content.txt";
+        let root = slog::Logger::root(
+            slog::Discard, 
+            o!("key1" => "value1", "key2" => "value2")
+        );
+        let mut file = File::open(CONTENT_FILE).unwrap();
+        let mut buf = Vec::new();
+        file.read_to_end(&mut buf).unwrap();
+        drop(file);
+        run_code(CPP, "test/lib/librewrite_file_content.so", &root).unwrap();
+        let mut file = File::open(CONTENT_FILE).unwrap();
+        let mut buf_after = Vec::new();
+        file.read_to_end(&mut buf_after).unwrap();
+        assert_eq!(str::from_utf8(&buf), str::from_utf8(&buf_after));
     }
 }

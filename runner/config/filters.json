@@ -1,5 +1,5 @@
 {
-    "main_thread": {
+    "default": {
         "mismatch_action": "kill_process",
         "match_action": "allow",
         "filter": [

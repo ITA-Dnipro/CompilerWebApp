@@ -1,13 +1,14 @@
 use super::super::filter::build_filter;
 use super::Runner;
 use crate::data::output::OutputData;
+use crate::data::error::Error;
 use fork::{fork, Fork};
-use seccompiler::{apply_filter, BpfProgramRef};
+use seccompiler::{apply_filter};
 use sharedlib::{Func, Lib, Symbol};
 use shh;
 use slog::Logger;
 use std::io::Read;
-use std::path::Path;
+use std::path::{Path};
 use std::{process, str, thread, time::Instant};
 
 pub(crate) struct CppRunner<'time> {
@@ -50,13 +51,44 @@ impl<'time> From<(String, &'static Logger, u128)> for CppRunner<'time> {
 }
 
 impl<'time> Runner for CppRunner<'time> {
-    fn run(&self) -> Result<OutputData, &'static str> {
-        let bpf_prg = build_filter().unwrap();
+    fn run(&self) -> Result<OutputData, Error> {
+        let bpf_prg = build_filter()?;
+        let path_to_lib  
+            = match Path::new(self.shared_object_path.as_str())
+                .canonicalize() 
+                    {
+                        Err(error) => {
+                            return Err(
+                                Error::NoLibError(error.to_string())
+                            )
+                        },
+                        Ok(_path) => _path
+                    };
+        let lib;
+        let shared_func: Func<extern "C" fn() -> i32> 
+              = unsafe {
+
+                    lib = match Lib::new(path_to_lib) {
+                        Ok(_lib) => _lib,
+                        Err(error) => return Err(
+                            Error::NoLibError(error.to_string())
+                        )
+                    };
+
+                    let shared_func_wrapper: Func<extern "C" fn() -> ::std::os::raw::c_int> =
+                        match lib.find_func("main") {
+                            Ok(_shared_func) => _shared_func,
+                            Err(error) => return Err(
+                                Error::EntryPointError(error.to_string())
+                            )
+                        };
+
+                    shared_func_wrapper
+                };
+
         let mut shh_stdout = shh::stdout().unwrap();
         let mut shh_stderr = shh::stderr().unwrap();
-
-        let forked = fork();
-        match forked {
+        match fork() {
             Ok(Fork::Parent(child)) => {
                 let _prev = Instant::now();
                 let handle = thread::spawn(move || {
@@ -84,28 +116,22 @@ impl<'time> Runner for CppRunner<'time> {
                 return Ok(output_data);
             }
             Ok(Fork::Child) => {
-                wrap_func_with_seccomp(self.shared_object_path.as_str(), &bpf_prg);
+                match apply_filter(&bpf_prg) {
+                    Ok(_) => unsafe { 
+                        shared_func.get()() 
+                    },
+                    // TODO: research an option to return valuable exit code
+                    Err(_) => process::exit(0),
+                };
                 process::exit(0);
             }
             Err(_i) => {
-                return Err("Failed to launch user code");
+                return Err(
+                    Error::ForkError(
+                        String::from("Failed to launch user code")
+                    )
+                );
             }
         }
-    }
-}
-
-fn wrap_func_with_seccomp(path_to_lib: &str, bpf_prg: BpfProgramRef) {
-    let path_to_lib = Path::new(path_to_lib).canonicalize().unwrap();
-    unsafe {
-        let lib = Lib::new(path_to_lib).unwrap();
-        let shared_func_wrapper: Func<extern "C" fn() -> ::std::os::raw::c_int> =
-            lib.find_func("main").expect("Could not find func.");
-        let shared_func = shared_func_wrapper.get();
-
-        match apply_filter(&bpf_prg) {
-            Ok(_) => shared_func(),
-            // TODO: research an option to return valuable exit code
-            Err(_) => process::exit(0),
-        };
     }
 }

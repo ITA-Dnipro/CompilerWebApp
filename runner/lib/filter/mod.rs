@@ -1,12 +1,15 @@
 use std::fs::{File};
-use std::path::Path;
 use std::env;
 use std::string::String;
+use crate::Error;
 use seccompiler::{compile_from_json, BpfProgram, TargetArch};
 
 const FILTERS_CONFIG_PATH: &str = "config/filters.json";
-
-pub fn build_filter() -> Result<BpfProgram, String> {
+/// # Reads filters from specified config file
+/// config file is to be found in following priority:
+/// 1. Read from CWA_FILTERS_CONFIG_PATH env variable
+/// 2. Read at config/filters.json
+pub(crate) fn build_filter() -> Result<BpfProgram, Error> {
     // TODO: change default json_path
     let preset_name= String::from("default");
     let config_path = match env::var("CWA_FILTERS_CONFIG_PATH") {
@@ -17,29 +20,40 @@ pub fn build_filter() -> Result<BpfProgram, String> {
             String::from(FILTERS_CONFIG_PATH)
         }
     };
-    if !Path::new(config_path.as_str()).exists() {
-        return Err(format!("{}: no such file.", config_path))
-    }
-    let mut _filters = compile_from_json(
-        File::open(config_path.as_str()).unwrap(), 
-        TargetArch::x86_64
-    );
-    let mut filters = match _filters {
-        Ok(_filt) => _filt,
-        Err(error) => {
-            return Err(error.to_string())
+    let mut filters;
+    match File::open(config_path.as_str()) 
+    {
+        Ok(reader) => 
+        {
+            match compile_from_json(reader, TargetArch::x86_64)
+            {
+                Ok(_filters) =>
+                {
+                    filters = _filters
+                }
+                Err(error) => 
+                {
+                    return Err(Error::ConfigError(error.to_string()))
+                }
+            }
+        },
+        Err(_error) => {
+            return Err(
+                Error::ConfigError(format!("{}: failed to open file.", config_path))
+            )
         }
-    };
-    
+    }
+
     // TODO: use preset string as func param
-    if let Some(bpf_prg) = filters.remove(preset_name.as_str()) {
+    if let Some(bpf_prg) = filters.remove(preset_name.as_str()) 
+    {
         Ok(bpf_prg)
-    } else {
+    } 
+    else 
+    {
         Err(
-            format!(
-                "{}: no such preset in {}", 
-                preset_name, 
-                config_path
+            Error::ConfigError(
+                format!("{}: no such preset in {}", preset_name, config_path)
             )
         )
     }
@@ -51,7 +65,7 @@ fn error_message() {
     let expected_path = "some non-existing file";
     env::set_var("CWA_FILTERS_CONFIG_PATH", expected_path);
     if let Err(error) =  build_filter() {
-        assert_eq!(format!("{}: no such file.", expected_path), error);
+        assert_eq!(format!("{}: failed to open file.", expected_path), error.to_string());
     };
 }
 
@@ -61,7 +75,7 @@ fn broken_json() {
     env::set_var("CWA_FILTERS_CONFIG_PATH", expected_path);
     if let Err(error) = build_filter() {
         assert!(
-            error.contains("Json Frontend error:")
+            error.to_string().contains("Json Frontend error:")
         );       
     };
 }
@@ -73,7 +87,7 @@ fn no_such_preset() {
     if let Err(error) = build_filter() {
         assert_eq!(
             format!("{}: no such preset in {}", "default", expected_path),
-            error
+            error.to_string()
         );       
     };
 }
