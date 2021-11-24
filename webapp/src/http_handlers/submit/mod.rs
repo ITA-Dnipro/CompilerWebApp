@@ -11,6 +11,7 @@ use compiler::handler::run_compilation;
 
 use super::super::BackendConfig;
 use std::path::Path;
+use std::sync::Arc;
 use super::super::filework::*;
 use super::sessions::session::Session;
 
@@ -19,7 +20,7 @@ use super::sessions::session::Session;
 pub async fn post_submit(
     compilation_json: Json<structs::InputData>,
     config: &State<BackendConfig>, 
-    logger: &State<Logger>, 
+    logger: &State<Arc<Logger>>, 
     session: Session) 
     -> Result<Json<structs::OutputData>, Custom<()>>
 {

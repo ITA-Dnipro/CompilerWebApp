@@ -73,10 +73,9 @@ impl<'r> FromRequest<'r> for Session
 
     async fn from_request(req: &'r Request<'_>) -> request::Outcome<Self, Self::Error>
     {
-        let logger = req.rocket().state::<slog::Logger>().unwrap();
-        // TODO: there theoretically is a case when mutex locking fails
-        let mut tracker = req.rocket()
-            .state::<Arc<Mutex<SessionsTracker>>>().unwrap().lock().unwrap();
+        let logger = req.rocket().state::<Arc<slog::Logger>>().unwrap();
+        let mut tracker = req.rocket().state::<Arc<Mutex<SessionsTracker>>>()
+            .unwrap().lock().unwrap_or_else(|_| std::process::exit(1));
         let config = req.rocket().state::<BackendConfig>().unwrap();
 
         match req.cookies().get("session_id")
