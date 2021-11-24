@@ -1,6 +1,9 @@
 extern crate chrono;
 
-pub mod compilers;
 pub mod data;
 pub mod handler;
-pub mod storage;
+pub(crate) mod compilers;
+pub(crate) mod storage;
+
+#[cfg(test)]
+mod test;
