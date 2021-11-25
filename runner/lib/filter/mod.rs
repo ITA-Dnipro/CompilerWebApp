@@ -11,7 +11,7 @@ const FILTERS_CONFIG_PATH: &str = "config/filters.json";
 /// 2. Read at config/filters.json
 pub(crate) fn build_filter() -> Result<BpfProgram, Error> {
     // TODO: change default json_path
-    let preset_name= String::from("default");
+    let preset_name = String::from("default");
     let config_path = match env::var("CWA_FILTERS_CONFIG_PATH") {
         Ok(env_path) => { 
             env_path 

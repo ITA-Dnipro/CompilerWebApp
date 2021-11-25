@@ -47,7 +47,7 @@ mod tests {
         if !file_path.exists() {
             File::create(file_path)
                 .expect("Could not create testfile.");
-        }
+        };
         
         run_code(CPP, "test/lib/libremove_file.so", &root).unwrap();
         let file_path = Path::new(TEST_DIR).join(FILE_NAME);

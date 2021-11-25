@@ -11,13 +11,15 @@ use std::io::Read;
 use std::path::{Path};
 use std::{process, str, thread, time::Instant};
 
-pub(crate) struct CppRunner<'time> {
+pub(crate) struct CppRunner<'time> 
+{
     shared_object_path: String,
     logger: &'time Logger,
     execution_limit: u128,
 }
 
-impl<'time> CppRunner<'time> {
+impl<'time> CppRunner<'time> 
+{
     pub fn new<T>(
         path: T, 
         logger: &'time Logger, 
@@ -30,7 +32,8 @@ impl<'time> CppRunner<'time> {
     }
 }
 
-impl<'time> From<(&str, &'time Logger, u128)> for CppRunner<'time> {
+impl<'time> From<(&str, &'time Logger, u128)> for CppRunner<'time> 
+{
     fn from(
         (path, logger, execution_limit): (&str, &'time Logger, u128)
     ) -> CppRunner<'time> {
@@ -42,7 +45,8 @@ impl<'time> From<(&str, &'time Logger, u128)> for CppRunner<'time> {
     }
 }
 
-impl<'time> From<(String, &'static Logger, u128)> for CppRunner<'time> {
+impl<'time> From<(String, &'static Logger, u128)> for CppRunner<'time> 
+{
     fn from(
         (path, logger, execution_limit): (String, &'static Logger, u128)
     ) -> CppRunner {
@@ -50,7 +54,8 @@ impl<'time> From<(String, &'static Logger, u128)> for CppRunner<'time> {
     }
 }
 
-impl<'time> Runner for CppRunner<'time> {
+impl<'time> Runner for CppRunner<'time> 
+{
     fn run(&self) -> Result<OutputData, Error> {
         let bpf_prg = build_filter()?;
         let path_to_lib  

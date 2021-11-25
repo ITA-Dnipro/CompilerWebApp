@@ -1,4 +1,5 @@
 use runner::run_code;
+use runner::data::error::Error;
 use std::fs::{remove_file, File};
 use std::path::{Path};
 use compiler::data::input_data::compiler_type::{CompilerType};
@@ -34,7 +35,8 @@ fn file_is_not_removed() {
             .expect("Could not create testfile.");
     }
     
-    run_code(CPP, "test/lib/libremove_file.so", &root).unwrap();
+    run_code(CPP, "test/lib/libremove_file.so", &root)
+        .unwrap();
     let file_path = Path::new(TEST_DIR).join(FILE_NAME);
     assert!(file_path.exists());
 }
@@ -51,7 +53,8 @@ fn file_is_not_created() {
             .expect("Could not remove file");
     }
 
-    run_code(CPP,"test/lib/libcreate_new_file.so", &root).unwrap();
+    run_code(CPP,"test/lib/libcreate_new_file.so", &root)
+        .unwrap();
     
     assert!(! file_path.exists());
 }
