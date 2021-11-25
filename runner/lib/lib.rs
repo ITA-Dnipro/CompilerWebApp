@@ -1,5 +1,5 @@
 #![feature(thread_is_running)]
-mod data;
+pub mod data;
 mod filter;
 mod runner;
 use std::{str};
