@@ -1,9 +1,8 @@
-#[macro_use] extern crate rocket;
-
 mod http_handlers;
 mod filework;
 mod config_struct;
 
+#[macro_use] extern crate rocket;
 #[macro_use]
 extern crate slog;
 extern crate slog_term;
@@ -20,7 +19,7 @@ use std::time::Duration;
 use rocket::fs::FileServer;
 use config_struct::BackendConfig;
 
-use http_handlers::{submit, sessions::sessions_tracker::SessionsTracker};
+use http_handlers::{submit, sessions::SessionsTracker};
 
 #[launch]
 fn rocket() -> _ 
