@@ -8,12 +8,12 @@ use sharedlib::{Func, Lib, Symbol};
 use shh;
 use slog::Logger;
 use std::io::Read;
-use std::path::{Path};
+use std::path::{Path, PathBuf};
 use std::{process, str, thread, time::Instant};
 
 pub(crate) struct CppRunner<'time> 
 {
-    shared_object_path: String,
+    shared_object_path: PathBuf,
     logger: &'time Logger,
     execution_limit: u128,
 }
@@ -37,29 +37,40 @@ impl<'time> From<(&str, &'time Logger, u128)> for CppRunner<'time>
     fn from(
         (path, logger, execution_limit): (&str, &'time Logger, u128)
     ) -> CppRunner<'time> {
+        let path = PathBuf::from(path);
         CppRunner {
-            shared_object_path: String::from(path),
+            shared_object_path: path,
             logger,
             execution_limit,
         }
     }
 }
 
-impl<'time> From<(String, &'static Logger, u128)> for CppRunner<'time> 
+impl<'time> From<(String, &'time Logger, u128)> for CppRunner<'time> 
 {
     fn from(
-        (path, logger, execution_limit): (String, &'static Logger, u128)
+        (path, logger, execution_limit): (String, &'time Logger, u128)
+    ) -> CppRunner {
+        let path = PathBuf::from(path);
+        CppRunner{shared_object_path: path, logger, execution_limit}
+    }
+}
+
+impl<'time> From<(PathBuf, &'time Logger, u128)> for CppRunner<'time> 
+{
+    fn from(
+        (path, logger, execution_limit): (PathBuf, &'time Logger, u128)
     ) -> CppRunner {
         CppRunner{shared_object_path: path, logger, execution_limit}
     }
 }
 
-impl<'time> Runner for CppRunner<'time> 
+impl<'time> Runner<'time> for CppRunner<'time> 
 {
     fn run(&self) -> Result<OutputData, Error> {
         let bpf_prg = build_filter()?;
         let path_to_lib  
-            = match Path::new(self.shared_object_path.as_str())
+            = match self.shared_object_path
                 .canonicalize() 
                     {
                         Err(error) => {

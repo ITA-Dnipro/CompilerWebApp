@@ -1,7 +1,7 @@
 use runner::run_code;
 use runner::data::error::Error;
 use std::fs::{remove_file, File};
-use std::path::{Path};
+use std::path::{Path, PathBuf};
 use compiler::data::input_data::compiler_type::{CompilerType};
 use {slog, slog::o};
 
@@ -19,7 +19,8 @@ fn casual_cpp() {
         slog::Discard, 
         o!("key1" => "value1", "key2" => "value2")
     ); 
-    run_code(CPP, "test/lib/libcasual_cpp.so", &root).unwrap();
+    let path = PathBuf::from("test/lib/libcasual_cpp.so");
+    run_code(CPP, path, &root).unwrap();
     assert!(true);
 }
 
@@ -34,8 +35,8 @@ fn file_is_not_removed() {
         File::create(file_path)
             .expect("Could not create testfile.");
     }
-    
-    run_code(CPP, "test/lib/libremove_file.so", &root)
+    let path  = PathBuf::from("test/lib/libremove_file.so");
+    run_code(CPP, path, &root)
         .unwrap();
     let file_path = Path::new(TEST_DIR).join(FILE_NAME);
     assert!(file_path.exists());
@@ -52,8 +53,8 @@ fn file_is_not_created() {
         remove_file(FILE_NAME)
             .expect("Could not remove file");
     }
-
-    run_code(CPP,"test/lib/libcreate_new_file.so", &root)
+    let path = PathBuf::from("test/lib/libcreate_new_file.so");
+    run_code(CPP, path, &root)
         .unwrap();
     
     assert!(! file_path.exists());

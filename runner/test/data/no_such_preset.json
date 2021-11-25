@@ -1,0 +1,20 @@
+{
+    "some_non_existring_preset": {
+        "mismatch_action": "kill_process",
+        "match_action": "allow",
+        "filter": [
+            {
+                "syscall": "fcntl",
+                "args": [
+                    {
+                        "index": 1,
+                        "type": "dword",
+                        "op": "eq",
+                        "val": 2,
+                        "comment": "F_SETFD"
+                    }
+                ]
+            }
+        ]
+    }
+}
