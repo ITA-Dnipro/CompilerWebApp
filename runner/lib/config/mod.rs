@@ -4,37 +4,39 @@ use serde_yaml;
 use crate::Error;
 use std::path::PathBuf;
 use std::fs::File;
-use std::collections::BTreeMap;
 
 
 #[derive(Deserialize, Debug)]
 pub(crate) struct Config{
-    execution_limit: Option<u64>,
-    entry_point: String
+    pub(crate) execution_limit: Option<u128>,
+    pub(crate) entry_point: String
 }
 
-pub(crate) fn get_config() -> Result<Config, Error>
+impl Config 
 {
-    let reader = match get_config_reader()
+    pub(crate) fn new() -> Result<Config, Error>
     {
-        Some(_reader) => _reader,
-        None =>
+        let reader = match get_config_reader()
         {
-            return Err(
-                Error::ConfigError("Failed to open config file".to_string())
-            )
-        }
-    };
+            Some(_reader) => _reader,
+            None =>
+            {
+                return Err(
+                    Error::ConfigError("Failed to open config file".to_string())
+                )
+            }
+        };
 
-    match serde_yaml::from_reader(reader)
-    {
-        Ok(map) => 
+        match serde_yaml::from_reader(reader)
         {
-            Ok(map)
-        },
-        Err(error) => 
-        {
-            Err(Error::ConfigError(error.to_string()))
+            Ok(map) => 
+            {
+                Ok(map)
+            },
+            Err(error) => 
+            {
+                Err(Error::ConfigError(error.to_string()))
+            }
         }
     }
 }
@@ -74,7 +76,7 @@ fn parse_some_config()
 {
     const ENV_VAR: &str = "CWA_RUNNER_CONFIG_PATH";
     env::set_var(ENV_VAR, "test/data/test_config.yaml");
-    let mut config =  get_config().unwrap();
+    let mut config =  Config::new().unwrap();
     println!("{:?}", config);
     //println!("{:?}", config.entry("execution_limit".to_string()));
     //println!("{:?}", config.get(&"execution_limit".to_string()));

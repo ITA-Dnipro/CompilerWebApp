@@ -26,9 +26,8 @@ pub fn run_code<'time>(
 ) -> Result<OutputData, Error> {
     let runner: Box<dyn Runner + 'time> = match lang {
         CompilerType::Cpp => {
-            let execution_limit = 1000;
 
-            Box::new(CppRunner::new(object_path, logger, execution_limit))
+            Box::new(CppRunner::new(object_path, logger)?)
         },
         _ => return Err(
             Error::NotImplementedError(String::from("Not implemented"))

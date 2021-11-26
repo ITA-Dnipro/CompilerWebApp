@@ -1,5 +1,6 @@
 use super::super::filter::build_filter;
 use super::Runner;
+use super::super::config::Config;
 use crate::data::output::OutputData;
 use crate::data::error::Error;
 use fork::{fork, Fork};
@@ -15,53 +16,18 @@ pub(crate) struct CppRunner<'time>
 {
     shared_object_path: PathBuf,
     logger: &'time Logger,
-    execution_limit: u128,
+    config: Config
 }
 
 impl<'time> CppRunner<'time> 
 {
-    pub fn new<T>(
-        path: T, 
-        logger: &'time Logger, 
-        execution_limit: u128
-    ) -> Self
-    where
-        (T, &'time Logger, u128): Into<CppRunner<'time>>,
+    pub fn new(path: PathBuf, logger: &'time Logger) -> Result<Self, Error>
     {
-        (path, logger, execution_limit).into()
-    }
-}
+        let config = Config::new()?;
 
-impl<'time> From<(&str, &'time Logger, u128)> for CppRunner<'time> 
-{
-    fn from(
-        (path, logger, execution_limit): (&str, &'time Logger, u128)
-    ) -> CppRunner<'time> {
-        let path = PathBuf::from(path);
-        CppRunner {
-            shared_object_path: path,
-            logger,
-            execution_limit,
-        }
-    }
-}
-
-impl<'time> From<(String, &'time Logger, u128)> for CppRunner<'time> 
-{
-    fn from(
-        (path, logger, execution_limit): (String, &'time Logger, u128)
-    ) -> CppRunner {
-        let path = PathBuf::from(path);
-        CppRunner{shared_object_path: path, logger, execution_limit}
-    }
-}
-
-impl<'time> From<(PathBuf, &'time Logger, u128)> for CppRunner<'time> 
-{
-    fn from(
-        (path, logger, execution_limit): (PathBuf, &'time Logger, u128)
-    ) -> CppRunner {
-        CppRunner{shared_object_path: path, logger, execution_limit}
+        Ok(
+            CppRunner {shared_object_path: path, logger, config}
+        )
     }
 }
 
@@ -69,17 +35,7 @@ impl<'time> Runner<'time> for CppRunner<'time>
 {
     fn run(&self) -> Result<OutputData, Error> {
         let bpf_prg = build_filter()?;
-        let path_to_lib  
-            = match self.shared_object_path
-                .canonicalize() 
-                    {
-                        Err(error) => {
-                            return Err(
-                                Error::NoLibError(error.to_string())
-                            )
-                        },
-                        Ok(_path) => _path
-                    };
+        let path_to_lib = self.shared_object_path.canonicalize()?;
         let lib;
         let shared_func: Func<extern "C" fn() -> i32> 
               = unsafe {
@@ -92,7 +48,7 @@ impl<'time> Runner<'time> for CppRunner<'time>
                     };
 
                     let shared_func_wrapper: Func<extern "C" fn() -> ::std::os::raw::c_int> =
-                        match lib.find_func("main") {
+                        match lib.find_func(self.config.entry_point.clone()) {
                             Ok(_shared_func) => _shared_func,
                             Err(error) => return Err(
                                 Error::EntryPointError(error.to_string())
@@ -106,18 +62,7 @@ impl<'time> Runner<'time> for CppRunner<'time>
         let mut shh_stderr = shh::stderr().unwrap();
         match fork() {
             Ok(Fork::Parent(child)) => {
-                let _prev = Instant::now();
-                let handle = thread::spawn(move || {
-                    let mut child_status: i32 = -1;
-                    let _pid_done = unsafe { libc::waitpid(child, &mut child_status, 0) };
-                });
-                while handle.is_running() {
-                    if _prev.elapsed().as_millis() > self.execution_limit {
-                        unsafe {
-                            libc::kill(child, 9);
-                        }
-                    }
-                }
+                self.join_child(child);
 
                 let mut buf: Vec<u8> = Vec::new();
                 shh_stdout.read_to_end(&mut buf).unwrap();
@@ -150,4 +95,35 @@ impl<'time> Runner<'time> for CppRunner<'time>
             }
         }
     }
+      
+}
+
+impl<'time> CppRunner<'time>
+{
+    fn join_child(&self, child: i32) 
+    {
+        let _prev = Instant::now();
+        let handle = thread::spawn(move || {
+            let mut child_status: i32 = -1;
+            let _pid_done = unsafe { libc::waitpid(child, &mut child_status, 0) };
+        });
+        if let Some(time_limit) = self.config.execution_limit
+        {
+            while handle.is_running() {
+                if _prev.elapsed().as_millis() > time_limit {
+                    unsafe {
+                        libc::kill(child, 9);
+                    }
+                }
+            }
+        }
+    } 
+}
+
+impl<'time> CppRunner<'time>
+{
+    fn get_shared_lib(&self)
+    {
+
+    } 
 }
