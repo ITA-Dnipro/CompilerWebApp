@@ -1,5 +1,6 @@
+
 {
-    "some_non_existring_preset": {
+    "default": {
         "mismatch_action": "kill_process",
         "match_action": "allow",
         "filter": [
@@ -18,3 +19,4 @@
         ]
     }
 }
+

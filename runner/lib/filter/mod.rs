@@ -20,30 +20,9 @@ pub(crate) fn build_filter() -> Result<BpfProgram, Error> {
             String::from(FILTERS_CONFIG_PATH)
         }
     };
-    let mut filters;
-    match File::open(config_path.as_str()) 
-    {
-        Ok(reader) => 
-        {
-            match compile_from_json(reader, TargetArch::x86_64)
-            {
-                Ok(_filters) =>
-                {
-                    filters = _filters
-                }
-                Err(error) => 
-                {
-                    return Err(Error::ConfigError(error.to_string()))
-                }
-            }
-        },
-        Err(_error) => {
-            return Err(
-                Error::ConfigError(format!("{}: failed to open file.", config_path))
-            )
-        }
-    }
-
+    let mut filters = compile_from_json(File::open(
+        config_path.as_str())?, TargetArch::x86_64
+    )?;
     // TODO: use preset string as func param
     if let Some(bpf_prg) = filters.remove(preset_name.as_str()) 
     {

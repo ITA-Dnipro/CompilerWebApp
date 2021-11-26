@@ -1,3 +1,6 @@
+use std::str::Utf8Error;
+
+use seccompiler;
 /// # Error enum describes error that occurs while running user code
 /// It is divided into 5 cases:
 /// 
@@ -41,7 +44,24 @@ impl Error
 
 impl From<std::io::Error> for Error 
 {
-    fn from(err: std::io::Error) -> Self {
+    fn from(err: std::io::Error) -> Self 
+    {
+        Error::ConfigError(err.to_string())
+    }
+}
+
+impl From<seccompiler::Error> for Error
+{
+    fn from(err: seccompiler::Error) -> Self
+    {
+        Error::ConfigError(err.to_string())
+    }
+}
+
+impl From<Utf8Error> for Error
+{
+    fn from(err: Utf8Error) -> Self
+    {
         Error::ConfigError(err.to_string())
     }
 }
