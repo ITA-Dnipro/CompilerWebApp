@@ -1,65 +1,96 @@
-#![allow(unused)]
-use std::fs::{File, remove_file};
+use std::fs::{File, create_dir, remove_dir_all, remove_file};
 use std::io::{Write, Seek, SeekFrom};
-use std::env;
 use std::path::{PathBuf, Path};
-use std::error::Error;
 
-pub fn write_source_to_file(source_code: &str, lang_extension: &str) -> Option<PathBuf>
+use slog::Logger;
+
+pub fn new_session_folder(
+    parent_folder: &Path, 
+    session_id: &str,
+    logger: &Logger
+) -> Option<PathBuf>
 {
-    // If error ever happens on work with temp files it's not on the user, 
-    // so he should get "internal server error" here
-    let mut input_file_name;
-    match env::var("COMPILATION_TEMP_DIR")
+    let dir_name = parent_folder.join(session_id);
+    match create_dir(&dir_name)
     {
-        Ok(temp_dir) => input_file_name = temp_dir,
-        Err(_) => return None
+        Ok(_) => 
+        {
+            info!(logger, "Session folder created at: {:?}", dir_name);
+
+            Some(dir_name)
+        },
+        Err(_) =>
+        {
+            error!(logger, "Couldn't create a folder: {:?}", dir_name);
+
+            None
+        }
     }
-      
-    input_file_name.push_str("/");
-    input_file_name.push_str(
-        &("compilation_input-".to_owned() + &generate_file_signature())
+}
+
+pub fn delete_folder(
+    folder: &Path
+) -> bool
+{
+    match remove_dir_all(folder)
+    {
+        Ok(_) => true,
+        Err(_) => false
+    }
+}
+
+pub fn save_source(
+    source_code: &str, 
+    lang_extension: &str,
+    parent_folder: &Path,
+    session_id: &str,
+    logger: &Logger) 
+    -> Option<PathBuf>
+{
+    let input_file = parent_folder.to_owned().join(
+        &("source-".to_owned() + session_id + lang_extension)
     );
-    input_file_name.push_str(lang_extension);
+
+    if !input_file.is_absolute()
+    {
+        error!(logger, "File path is not valid: {:?}", input_file);
+        return None;
+    }
+
     let mut code_file: File;
-    match File::create(&input_file_name)
+    match File::create(&input_file)
     {
         Ok(file) => code_file = file,
         Err(_) =>
         {
-            println!("[ERROR]: Couldn't create a file at \"{}\"", input_file_name);
+            error!(logger, "Couldn't create a file at {:?}", input_file);
             return None;
         }
     }
         
     match code_file.write_all(source_code.as_bytes())
-        .and_then(|()| code_file.seek(SeekFrom::Start(0)))
+        .and_then(|_| code_file.seek(SeekFrom::Start(0)))
     {
         Ok(_) => {},
         Err(_) =>
         {
-            println!("[ERROR]: Error while working with \"{}\"", input_file_name);
+            error!(logger, "Couldn't write to {:?}", input_file);
+            drop(code_file);
+            delete_file(Path::new(&input_file));
             return None;
         }
     }
 
-    println!("[INFO]: Created \"{}\"", input_file_name);
-    Some(PathBuf::from(input_file_name))
+    Some(PathBuf::from(input_file))
 }
 
-pub fn delete_file(filename: &Path)
+pub fn delete_file(filename: &Path) -> bool
 {
     match remove_file(filename)
     {
-        Ok(_) => println!("[INFO]: Removed {:?}.", filename),
-        Err(e) => println!("[ERROR]: Couldn't remove {:?}", filename)   
+        Ok(_) => true,
+        Err(_) => false
     }    
-}
-
-fn generate_file_signature() -> String
-{
-    chrono::Utc::now()
-        .format("%Y-%m-%d-%H-%M-%S-%f").to_string()
 }
 
 #[cfg(test)]

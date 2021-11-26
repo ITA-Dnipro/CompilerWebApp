@@ -19,7 +19,7 @@ fn main() -> std::io::Result<()> {
         compiler_type: CompilerType::Cpp,
         source_code_file_path: PathBuf::from("./temp/src/test.cpp"),
         compiled_directory_path: PathBuf::from("./temp/bin/"), 
-        compiler_options: String::from("-g --std=c++17 -Wall"),
+        compiler_options: String::from("-g --std=c++17 -Wall -o"),
         //compiler_options: String::new(),
     };
 
