@@ -74,7 +74,7 @@ fn get_config_reader(logger: &Logger) -> Option<File>
         return Some(reader)
     }
     error!(logger, "Failed to open config file!");
-    
+
     None
 }
 

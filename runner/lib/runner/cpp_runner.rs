@@ -7,7 +7,7 @@ use fork::{fork, Fork};
 use seccompiler::{apply_filter};
 use sharedlib::{Func, Lib, Symbol};
 use shh;
-use slog::{Logger, trace, error, info};
+use slog::{Logger, trace, error, info, debug};
 use std::io::Read;
 use std::path::{Path, PathBuf};
 use std::{process, str, thread, time::Instant};
@@ -72,13 +72,11 @@ impl<'time> Runner<'time> for CppRunner<'time>
 
                     shared_func_wrapper
                 };
-
         let mut shh_stdout = shh::stdout()?;
         let mut shh_stderr = shh::stderr()?;
         match fork() {
             Ok(Fork::Parent(child)) => {
                 self.join_child(child);
-
                 let mut buf: Vec<u8> = Vec::new();
                 shh_stdout.read_to_end(&mut buf)?;
                 let stdout = str::from_utf8(&buf)?;
@@ -88,14 +86,14 @@ impl<'time> Runner<'time> for CppRunner<'time>
                 let stderr = str::from_utf8(&buf)?;
                 (drop(shh_stdout), drop(shh_stderr));
                 let output_data = OutputData::new(stdout, stderr);
-
+                debug!(self.logger, "output_data: {:?}", output_data);
+ 
                 return Ok(output_data);
             }
             Ok(Fork::Child) => {
                 match apply_filter(&bpf_prg) {
                     Ok(_) => 
                     {
-                        info!(self.logger, "launch shared object code");
                         unsafe { 
                             shared_func.get()() 
                         }
@@ -103,8 +101,6 @@ impl<'time> Runner<'time> for CppRunner<'time>
                     // TODO: research an option to return valuable exit code
                     Err(_) => 
                     {
-                        error!(self.logger, "Failed to apply filter");
-
                         process::exit(0)
                     },
                 };
@@ -112,8 +108,6 @@ impl<'time> Runner<'time> for CppRunner<'time>
             }
             Err(_i) => 
             {
-                error!(self.logger, "Failed to fork!");
-
                 return Err(
                     Error::ForkError(
                         String::from("Failed to launch user code")
@@ -144,13 +138,5 @@ impl<'time> CppRunner<'time>
                 }
             }
         }
-    } 
-}
-
-impl<'time> CppRunner<'time>
-{
-    fn get_shared_lib(&self)
-    {
-
     } 
 }
