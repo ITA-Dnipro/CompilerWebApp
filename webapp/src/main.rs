@@ -10,6 +10,7 @@ extern crate slog_async;
 use figment::providers::Format;
 use figment::{Figment, providers::Yaml};
 use rocket::fairing::AdHoc;
+use rocket::fs::relative;
 use slog::Drain;
 
 use std::env::current_dir;
@@ -19,14 +20,14 @@ use std::time::Duration;
 use rocket::fs::FileServer;
 use config_struct::BackendConfig;
 
-use http_handlers::{submit, sessions::SessionsTracker};
+use http_handlers::{submit, sessions::SessionsTracker, index};
 
 #[launch]
 fn rocket() -> _ 
 {
     // Backend config loading
     let mut backend_config: BackendConfig = Figment::new()
-        .merge(Yaml::file("BackendConfig.yaml"))
+        .merge(Yaml::file(relative!("BackendConfig.yaml")))
         .extract().unwrap();
     // TODO: cover cases when the path is already full
     backend_config.sessions_data_dir = current_dir().unwrap()
@@ -69,11 +70,18 @@ fn rocket() -> _
     info!(log, "Backend config:\n {:?}", backend_config);
 
     rocket::build()
-        .mount("/", FileServer::from("static/"))
+        // index.html getters
+        .mount("/", routes![index::get_index])
+        .mount("/", FileServer::from(relative!("static")))
+        // Submission endpoint
         .mount("/", routes![submit::post_submit])
+        // Server states
         .manage(backend_config)
         .manage(sessions_tracker)
         .manage(log)
+        // Templaiting fairing
+        .attach(rocket_dyn_templates::Template::fairing())
+        // Sessions cleaner thread startup
         .attach(AdHoc::on_liftoff("Sessions cleaner", |rocket| Box::pin(async move 
             {
                 let tracker = rocket.state::<Arc<Mutex<SessionsTracker>>>()
@@ -96,27 +104,28 @@ fn rocket() -> _
                     }
                 });
             })))
-            .attach(AdHoc::on_liftoff("Sessions saver", |rocket| Box::pin(async move 
+        // Sessions saver thread startup
+        .attach(AdHoc::on_liftoff("Sessions saver", |rocket| Box::pin(async move 
+            {
+                let tracker = rocket.state::<Arc<Mutex<SessionsTracker>>>()
+                    .unwrap().to_owned();
+                let logger = rocket.state::<Arc<slog::Logger>>().unwrap().to_owned();
+                let config = rocket.state::<BackendConfig>().unwrap();
+                let interval = config.sessions_save_interval;
+                let save_path = config.sessions_data_file_dir.clone();
+                info!(logger, "Sessions saver started");
+                
+                thread::spawn(move ||
                 {
-                    let tracker = rocket.state::<Arc<Mutex<SessionsTracker>>>()
-                        .unwrap().to_owned();
-                    let logger = rocket.state::<Arc<slog::Logger>>().unwrap().to_owned();
-                    let config = rocket.state::<BackendConfig>().unwrap();
-                    let interval = config.sessions_save_interval;
-                    let save_path = config.sessions_data_file_dir.clone();
-                    info!(logger, "Sessions saver started");
-                    
-                    thread::spawn(move ||
+                    loop
                     {
-                        loop
-                        {
-                            sleep(std::time::Duration::from_millis(interval));
-                            let locked = tracker.lock()
-                                .unwrap_or_else(|_| std::process::exit(1));
-                            locked.save(&save_path);
-                            drop(locked);
-                            info!(logger, "Saved sessions data to a file");
-                        }
-                    });
-                })))
+                        sleep(std::time::Duration::from_millis(interval));
+                        let locked = tracker.lock()
+                            .unwrap_or_else(|_| std::process::exit(1));
+                        locked.save(&save_path);
+                        drop(locked);
+                        info!(logger, "Saved sessions data to a file");
+                    }
+                });
+            })))
 }

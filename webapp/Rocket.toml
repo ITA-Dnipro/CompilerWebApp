@@ -4,3 +4,4 @@ tls = { certs = "certificates/server-cert.pem", key = "certificates/server-key.p
 # Required by the "secrets" feature of Rocket
 # I haven't figured out if it's possible to specify it through a file
 secret_key = "aEv2cxNQwBvA3NmoOV3FE8gghFfh+4Ghsj2XKc7CVGc="
+template_dir = "static"

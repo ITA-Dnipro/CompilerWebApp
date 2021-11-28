@@ -16,6 +16,10 @@ slog-async = "2.7.0"
 uuid = { version = "*", features = ["v4"] }
 figment = { version = "0.10.6", features = ["yaml", "test"] }
 
+[dependencies.rocket_dyn_templates]
+version = "0.1.0-rc.1"
+features = ["tera"]
+
 [dependencies.compiler]
 path = "../compiler"
 
