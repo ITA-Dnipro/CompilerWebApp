@@ -76,7 +76,6 @@ impl<'time> Runner<'time> for CppRunner<'time>
                         process::exit(0)
                     },
                 };
-                //unsafe {shared_func.get()()}  ;
                 process::exit(exit_code);
             }
             Err(_i) => 
