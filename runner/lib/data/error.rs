@@ -1,4 +1,5 @@
 use std::str::Utf8Error;
+use std::any::Any;
 
 use seccompiler;
 /// # Error enum describes error that occurs while running user code
@@ -63,5 +64,13 @@ impl From<Utf8Error> for Error
     fn from(err: Utf8Error) -> Self
     {
         Error::ConfigError(err.to_string())
+    }
+}
+
+impl From<Box<dyn Any + Send>> for Error
+{
+    fn from(err: Box<dyn Any + Send>) -> Self
+    {
+        Error::NotImplementedError(format!("{:?}", err))
     }
 }

@@ -1,16 +1,20 @@
+extern crate nix;
 use super::super::filter::build_filter;
 use super::Runner;
 use super::super::config::Config;
 use crate::data::output::OutputData;
 use crate::data::error::Error;
-use fork::{fork, Fork};
+use super::lib_wrapper::LibWrapper as Lib;
 use seccompiler::{apply_filter};
-use sharedlib::{Func, Lib, Symbol};
 use shh;
-use slog::{Logger, trace, error, info, debug};
+use slog::{Logger, trace, debug};
+use sharedlib:: {Symbol};
 use std::io::Read;
-use std::path::{Path, PathBuf};
+use std::sync::{Arc, Mutex};
+use std::path::{PathBuf};
 use std::{process, str, thread, time::Instant};
+use nix::sys::wait::{waitpid, WaitStatus};
+use nix::unistd::{fork, ForkResult, Pid};
 
 pub(crate) struct CppRunner<'time> 
 {
@@ -35,76 +39,45 @@ impl<'time> CppRunner<'time>
 impl<'time> Runner<'time> for CppRunner<'time> 
 {
     fn run(&self) -> Result<OutputData, Error> {
-        let bpf_prg = build_filter()?;
-        let path_to_lib = self.shared_object_path.canonicalize()?;
-        trace!(self.logger, "Shared object path: {:?}", path_to_lib);
-        let lib;
-        let shared_func: Func<extern "C" fn() -> i32> 
-              = unsafe {
+        let bpf_prg = build_filter(self.logger)?;
 
-                    lib = match Lib::new(path_to_lib.clone()) {
-                        Ok(_lib) => _lib,
-                        Err(error) => 
-                        {
-                            error!(self.logger, "{:?}: Failed to open", path_to_lib);
-                            return Err(
-                                Error::NoLibError(error.to_string())
-                            )
-                        }
-                    };
+        trace!(self.logger, "Shared object path: {:?}", self.shared_object_path);
 
-                    let shared_func_wrapper: Func<extern "C" fn() -> ::std::os::raw::c_int> =
-                        match lib.find_func(self.config.entry_point.clone()) {
-                            Ok(_shared_func) => _shared_func,
-                            Err(error) => 
-                            {
-                                error!(
-                                    self.logger, "{}: {}", 
-                                    self.config.entry_point.clone(), 
-                                    error
-                                );
+        let lib = Lib::new(
+            self.logger, 
+            self.shared_object_path.clone(), 
+            self.config.entry_point.clone()
+        )?;
+        let mut shh_output = shh::stdout()?
+            .chain(shh::stderr()?);
 
-                                return Err(
-                                    Error::EntryPointError(error.to_string())
-                                )
-                            }   
-                        };
-
-                    shared_func_wrapper
-                };
-        let mut shh_stdout = shh::stdout()?;
-        let mut shh_stderr = shh::stderr()?;
-        match fork() {
-            Ok(Fork::Parent(child)) => {
-                self.join_child(child);
+        match unsafe {fork() } {
+            Ok(ForkResult::Parent{child}) => {
+                let (exit_code , err_msg)= self.join_child(child)?;
                 let mut buf: Vec<u8> = Vec::new();
-                shh_stdout.read_to_end(&mut buf)?;
+                shh_output.read_to_end(&mut buf)?;
                 let stdout = str::from_utf8(&buf)?;
-
-                let mut buf: Vec<u8> = Vec::new();
-                shh_stderr.read_to_end(&mut buf)?;
-                let stderr = str::from_utf8(&buf)?;
-                (drop(shh_stdout), drop(shh_stderr));
-                let output_data = OutputData::new(stdout, stderr);
+                drop(shh_output);
+                let output_data = OutputData::new(stdout, &err_msg, exit_code);
                 debug!(self.logger, "output_data: {:?}", output_data);
  
                 return Ok(output_data);
             }
-            Ok(Fork::Child) => {
-                match apply_filter(&bpf_prg) {
+            Ok(ForkResult::Child) => {
+                let exit_code = match apply_filter(&bpf_prg) {
                     Ok(_) => 
                     {
                         unsafe { 
-                            shared_func.get()() 
+                            lib.shared_func()?.get()()
                         }
                     },
-                    // TODO: research an option to return valuable exit code
                     Err(_) => 
                     {
                         process::exit(0)
                     },
                 };
-                process::exit(0);
+                //unsafe {shared_func.get()()}  ;
+                process::exit(exit_code);
             }
             Err(_i) => 
             {
@@ -121,22 +94,70 @@ impl<'time> Runner<'time> for CppRunner<'time>
 
 impl<'time> CppRunner<'time>
 {
-    fn join_child(&self, child: i32) 
+    fn join_child(&self, child: Pid) -> Result<(i32, String), Error>
     {
         let _prev = Instant::now();
+        let error = Arc::new(Mutex::new(String::new()));
+        let error_clone = Arc::clone(&error);
         let handle = thread::spawn(move || {
-            let mut child_status: i32 = -1;
-            let _pid_done = unsafe { libc::waitpid(child, &mut child_status, 0) };
+            let status = waitpid( child, None);
+            
+            let status = status.unwrap();
+            match status 
+            {
+                WaitStatus::Exited(_, exit_code) => exit_code,
+                WaitStatus::Stopped(_, sig) => 
+                {
+                    error_clone.lock().unwrap()
+                        .push_str(format!("Terminated with {sig}").as_str());
+
+                    0
+                },
+                WaitStatus::PtraceSyscall(_) => 
+                {
+                    error_clone.lock().unwrap()
+                        .push_str(format!("Terminated w").as_str());
+                    0
+                },
+                WaitStatus::PtraceEvent(_, sig, ex_c) => 
+                {
+                    error_clone.lock().unwrap()
+                        .push_str(format!("Terminated with {sig}").as_str());
+
+                    ex_c
+                },
+                WaitStatus::Signaled(_, sig, _) => 
+                {
+                    error_clone.lock().unwrap()
+                        .push_str(format!("Terminated with {sig}").as_str());
+
+                    0
+                },
+                _ =>
+                {
+                    error_clone.lock().unwrap()
+                        .push_str(format!("Terminated with").as_str());
+
+                    0
+                } 
+            }
         });
         if let Some(time_limit) = self.config.execution_limit
         {
             while handle.is_running() {
                 if _prev.elapsed().as_millis() > time_limit {
                     unsafe {
-                        libc::kill(child, 9);
+                        libc::kill(child.as_raw(), 9);
                     }
+                    error.lock().unwrap()
+                        .push_str("Process reached execution time limit. ");
+                    break;
                 }
             }
         }
+        let exit_code = handle.join()?;
+        let error =  format!("{}", *error.lock().unwrap());
+
+        Ok((exit_code, error))
     } 
 }

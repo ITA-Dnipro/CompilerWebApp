@@ -12,7 +12,7 @@ mod tests {
     #[test]
     fn casual_cpp() {
         let root = get_logger();
-        let path = PathBuf::from("test/lib/libcasual_cpp");
+        let path = PathBuf::from("test/lib/casual_cpp.so");
         run_code(CPP, path, &root).unwrap();
         assert!(true);
     }
@@ -41,7 +41,7 @@ mod tests {
             File::create(file_path)
                 .expect("Could not create testfile.");
         };
-        let path = PathBuf::from("test/lib/libremove_file.so");
+        let path = PathBuf::from("test/lib/remove_file.so");
         run_code(CPP, path, &root).unwrap();
         let file_path = Path::new(TEST_DIR).join(FILE_NAME);
         assert!(file_path.exists());
@@ -50,15 +50,12 @@ mod tests {
     #[test]
     fn prints_text() {
         let root = get_logger();
-        let path = PathBuf::from("test/lib/libsimple_print.so");
-        let output= run_code(CPP, path, &root);
-        match output {
-            Err(_) => assert!(false),
-            Ok(output_data) => {
-                assert_eq!("", output_data.stderr);
-                assert_eq!("HI from main()!\n", output_data.stdout);
-            }
-        }
+        let path = PathBuf::from("test/lib/simple_print.so");
+        let output= run_code(CPP, path, &root).unwrap();
+        
+        assert_eq!("", output.stderr);
+        assert_eq!("HI from cout\nAgain from cout\nHI from cerr\n", output.stdout);
+        
     }
 
     #[test]
@@ -77,8 +74,8 @@ mod tests {
         let root = get_logger();
         let path = PathBuf::from("test/lib/libloop.so");
         let handle  = thread::spawn(move || {       
-            run_code(CPP, path, &root).unwrap();
-            //assert!(false);
+            let output = run_code(CPP, path, &root).unwrap();
+            assert_eq!(output.stderr, "Process reached execution time limit. Terminated with SIGKILL");
             return;
             //std::process::exit(0);
         });
@@ -94,9 +91,9 @@ mod tests {
     #[test]
     fn runtime_error() {
         let root = get_logger();
-        let path = PathBuf::from("test/lib/libruntime_error.so");
+        let path = PathBuf::from("test/lib/runtime_error.so");
         let output = run_code(CPP, path, &root).unwrap();
-        assert_eq!(output.stderr, "");
+        assert_eq!(output.stderr, "Terminated with SIGFPE");
     }
     
     #[test]
@@ -107,7 +104,7 @@ mod tests {
         let mut buf = Vec::new();
         file.read_to_end(&mut buf).unwrap();
         drop(file);
-        let path = PathBuf::from("test/lib/librewrite_file_content.so");
+        let path = PathBuf::from("test/lib/rewrite.so");
         run_code(CPP, path, &root).unwrap();
         let mut file = File::open(CONTENT_FILE).unwrap();
         let mut buf_after = Vec::new();
