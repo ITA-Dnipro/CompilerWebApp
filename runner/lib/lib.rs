@@ -1,8 +1,11 @@
-mod data;
+#![feature(thread_is_running)]
+pub mod data;
 mod filter;
+mod config;
 mod runner;
-use std::{process, str};
+use std::{str, path::PathBuf};
 use crate::data::output::OutputData;
+use crate::data::error::Error;
 use compiler::data::input_data::compiler_type::CompilerType;
 use runner::{Runner, cpp_runner::CppRunner};
 use slog::Logger;
@@ -13,17 +16,22 @@ use slog::Logger;
 /// * `object_path` - path to shared object
 /// * `logger` - logger
 /// # Result
-/// * `Result<OutputData, &'static str>`
+/// * `Result<OutputData, Error>`
 /// * `OutputData` is a struct that contains results of running code: stdout, stderr
 ///
 pub fn run_code<'time>(
     lang: CompilerType,
-    object_path: &'static str,
+    object_path: PathBuf,
     logger: &'time Logger,
-) -> Result<OutputData, &'static str> {
-    let runner: Box<dyn Runner> = match lang {
-        CompilerType::Cpp => Box::new(CppRunner::new(object_path, logger)),
-        _ => return Err("Not implemented"),
+) -> Result<OutputData, Error> {
+    let runner: Box<dyn Runner + 'time> = match lang {
+        CompilerType::Cpp => {
+
+            Box::new(CppRunner::new(object_path, logger)?)
+        },
+        _ => return Err(
+            Error::NotImplementedError(String::from("Not implemented"))
+        ),
     };
 
     runner.run()

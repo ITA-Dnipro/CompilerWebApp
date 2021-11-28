@@ -1,97 +1,156 @@
+use super::super::filter::build_filter;
 use super::Runner;
-use slog::Logger;
+use super::super::config::Config;
 use crate::data::output::OutputData;
-use std::{process, str};
-use seccompiler::{apply_filter, BpfProgramRef};
-use std::path::Path;
+use crate::data::error::Error;
 use fork::{fork, Fork};
+use seccompiler::{apply_filter};
 use sharedlib::{Func, Lib, Symbol};
 use shh;
+use slog::{Logger, trace, error, info};
 use std::io::Read;
-use super::super::filter::build_filter;
+use std::path::{Path, PathBuf};
+use std::{process, str, thread, time::Instant};
 
-pub(crate) struct CppRunner<'time> {
-    shared_object_path: String,
-    logger: &'time Logger
+pub(crate) struct CppRunner<'time> 
+{
+    shared_object_path: PathBuf,
+    logger: &'time Logger,
+    config: Config
 }
 
-impl<'time> CppRunner<'time> {
-    pub fn new<T>(path: T, logger: &'time Logger) -> Self
-        where (T, &'time Logger): Into<CppRunner<'time>> {
-            (path, logger).into()
-        }
-}
+impl<'time> CppRunner<'time> 
+{
+    pub fn new(path: PathBuf, logger: &'time Logger) -> Result<Self, Error>
+    {
+        trace!(logger, "Create CppRunner"); 
+        let config = Config::new(logger)?;
 
-impl<'time> From<(&str, &'time Logger)> for CppRunner<'time> {
-    fn from((path, logger): (&str, &'time Logger)) -> CppRunner<'time> {
-        CppRunner{
-            shared_object_path: String::from(path),
-            logger
-        }
+        Ok(
+            CppRunner {shared_object_path: path, logger, config}
+        )
     }
 }
 
-impl<'time> From<(String, &'static Logger)> for CppRunner<'time> {
-    fn from((path, logger): (String, &'static Logger)) -> CppRunner {
-        CppRunner{
-            shared_object_path: path,
-            logger
-        }
-    }
-}
+impl<'time> Runner<'time> for CppRunner<'time> 
+{
+    fn run(&self) -> Result<OutputData, Error> {
+        let bpf_prg = build_filter()?;
+        let path_to_lib = self.shared_object_path.canonicalize()?;
+        trace!(self.logger, "Shared object path: {:?}", path_to_lib);
+        let lib;
+        let shared_func: Func<extern "C" fn() -> i32> 
+              = unsafe {
 
-impl<'time> Runner for CppRunner<'time> {
-    fn run(&self) -> Result<OutputData, &'static str> {
-        let bpf_prg = build_filter().unwrap();
-        let mut shh_stdout = shh::stdout().unwrap();
-        let mut shh_stderr = shh::stderr().unwrap();
-    
-        let forked = fork();
-        match forked {
+                    lib = match Lib::new(path_to_lib.clone()) {
+                        Ok(_lib) => _lib,
+                        Err(error) => 
+                        {
+                            error!(self.logger, "{:?}: Failed to open", path_to_lib);
+                            return Err(
+                                Error::NoLibError(error.to_string())
+                            )
+                        }
+                    };
+
+                    let shared_func_wrapper: Func<extern "C" fn() -> ::std::os::raw::c_int> =
+                        match lib.find_func(self.config.entry_point.clone()) {
+                            Ok(_shared_func) => _shared_func,
+                            Err(error) => 
+                            {
+                                error!(
+                                    self.logger, "{}: {}", 
+                                    self.config.entry_point.clone(), 
+                                    error
+                                );
+
+                                return Err(
+                                    Error::EntryPointError(error.to_string())
+                                )
+                            }   
+                        };
+
+                    shared_func_wrapper
+                };
+
+        let mut shh_stdout = shh::stdout()?;
+        let mut shh_stderr = shh::stderr()?;
+        match fork() {
             Ok(Fork::Parent(child)) => {
-                let mut child_status: i32 = -1;
-                let _pid_done = unsafe { libc::waitpid(child, &mut child_status, 0) };
-    
+                self.join_child(child);
+
                 let mut buf: Vec<u8> = Vec::new();
-                shh_stdout.read_to_end(&mut buf).unwrap();
-                let stdout = str::from_utf8(&buf).unwrap();
-    
+                shh_stdout.read_to_end(&mut buf)?;
+                let stdout = str::from_utf8(&buf)?;
+
                 let mut buf: Vec<u8> = Vec::new();
-                shh_stderr.read_to_end(&mut buf).unwrap();
-                let stderr = str::from_utf8(&buf).unwrap();
+                shh_stderr.read_to_end(&mut buf)?;
+                let stderr = str::from_utf8(&buf)?;
                 (drop(shh_stdout), drop(shh_stderr));
-    
                 let output_data = OutputData::new(stdout, stderr);
-    
+
                 return Ok(output_data);
             }
             Ok(Fork::Child) => {
-                wrap_func_witch_seccomp(
-                    self.shared_object_path.as_str(), 
-                    &bpf_prg
-                );
+                match apply_filter(&bpf_prg) {
+                    Ok(_) => 
+                    {
+                        info!(self.logger, "launch shared object code");
+                        unsafe { 
+                            shared_func.get()() 
+                        }
+                    },
+                    // TODO: research an option to return valuable exit code
+                    Err(_) => 
+                    {
+                        error!(self.logger, "Failed to apply filter");
+
+                        process::exit(0)
+                    },
+                };
                 process::exit(0);
             }
-            Err(_i) => {
-                return Err("Failed to launch user code");
+            Err(_i) => 
+            {
+                error!(self.logger, "Failed to fork!");
+
+                return Err(
+                    Error::ForkError(
+                        String::from("Failed to launch user code")
+                    )
+                );
             }
         }
     }
-        
+      
 }
 
-fn wrap_func_witch_seccomp(path_to_lib: &str, bpf_prg: BpfProgramRef) {
-    let path_to_lib = Path::new(path_to_lib).canonicalize().unwrap();
-    unsafe {
-        let lib = Lib::new(path_to_lib).unwrap();
-        let shared_func_wrapper: Func<extern "C" fn() -> ::std::os::raw::c_int> =
-            lib.find_func("main").expect("Could not find func.");
-        let shared_func = shared_func_wrapper.get();
+impl<'time> CppRunner<'time>
+{
+    fn join_child(&self, child: i32) 
+    {
+        let _prev = Instant::now();
+        let handle = thread::spawn(move || {
+            let mut child_status: i32 = -1;
+            let _pid_done = unsafe { libc::waitpid(child, &mut child_status, 0) };
+        });
+        if let Some(time_limit) = self.config.execution_limit
+        {
+            while handle.is_running() {
+                if _prev.elapsed().as_millis() > time_limit {
+                    unsafe {
+                        libc::kill(child, 9);
+                    }
+                }
+            }
+        }
+    } 
+}
 
-        match apply_filter(&bpf_prg) {
-            Ok(_) => shared_func(),
-            // TODO: research an option to return valuable exit code
-            Err(_) => process::exit(0),
-        };
-    }
+impl<'time> CppRunner<'time>
+{
+    fn get_shared_lib(&self)
+    {
+
+    } 
 }
