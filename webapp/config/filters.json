@@ -1,0 +1,75 @@
+{
+    "default": {
+        "mismatch_action": "kill_process",
+        "match_action": "allow",
+        "filter": [
+            {
+                "syscall": "accept4"
+            },
+            {
+                "syscall": "access"
+            },
+            {
+                "syscall": "openat"
+            },
+            {
+                "syscall": "read"
+            },
+            {
+                "syscall": "fstat"
+            },
+            {
+                "syscall": "mmap"
+            },
+            {
+                "syscall": "mprotect"
+            },
+            {
+                "syscall": "brk"
+            },
+            {
+                "syscall": "munmap"
+            },
+            {
+                "syscall": "write"
+            },
+            {
+                "syscall": "arch_prctl"
+            },
+            {
+                "syscall": "exit_group"
+            },
+            {
+                "syscall": "fcntl",
+                "args": [
+                    {
+                        "index": 1,
+                        "type": "dword",
+                        "op": "eq",
+                        "val": 2,
+                        "comment": "F_SETFD"
+                    },
+                    {
+                        "index": 2,
+                        "type": "dword",
+                        "op": "eq",
+                        "val": 1,
+                        "comment": "FD_CLOEXEC"
+                    }
+                ]
+            },
+            {
+                "syscall": "fcntl",
+                "args": [
+                    {
+                        "index": 1,
+                        "type": "dword",
+                        "op": "eq",
+                        "val": 1,
+                        "comment": "F_GETFD"
+                    }
+                ]
+            }
+        ]
+    }
+}

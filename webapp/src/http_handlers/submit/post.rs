@@ -8,7 +8,7 @@ use slog::Logger;
 
 use compiler::data::input_data::{InputData, compiler_type::CompilerType};
 use compiler::handler::run_compilation;
-use runner::run_code;
+use runner::{run_code, data::output::OutputData};
 
 use crate::http_handlers::submit::structs::{SubmitInput, SubmitOutput, SubmitHeaders};
 use crate::http_handlers::sessions::Session;
@@ -41,10 +41,7 @@ pub async fn post_submit(
         &logger)
     {
         Some(path) => source_file = path,
-        None => 
-        {
-            return Err(Custom(Status::InternalServerError, ()));
-        }
+        None => return Err(Custom(Status::InternalServerError, ()))
     }
     trace!(logger, "Source code file created: {:?}", source_file);
 
@@ -58,7 +55,9 @@ pub async fn post_submit(
         return Err(Custom(Status::InternalServerError, ()));
     };
 
-    let compilation_data = compilation_json.into_inner();
+    let mut compilation_data = compilation_json.into_inner();
+    // TODO: come up with something less hardcoded
+    compilation_data.options += "-fpic -shared";    // Required for the runner
     let mut response_obj: SubmitOutput;
     let binary_path;
 
@@ -81,9 +80,19 @@ pub async fn post_submit(
     let lang_type = get_lang_type(&compilation_data.lang).unwrap();
 
     // Execution
-    if submit_options.execute
+    if submit_options.execute && response_obj.status_code == 0
     {
-        try_execute(lang_type, &binary_path, &logger);
+        match try_execute(lang_type, &binary_path, &logger)
+        {
+            Ok(exec_output) => 
+            {
+                response_obj.append_runner_output(exec_output);
+            },
+            Err(_) => 
+            {
+                return Err(Custom(Status::InternalServerError, ()));
+            },
+        }
     }
     
     Ok(Json(response_obj))
@@ -134,30 +143,19 @@ fn try_execute(
     lang: CompilerType,
     binary_path: &Path, 
     logger: &Logger)
-
-{
-    let binary_path_str = if let Some(path ) = binary_path.as_os_str().to_str()
+    -> Result<OutputData, ()>
+{  
+    match run_code(lang, binary_path.to_owned(), logger)
     {
-        path
-    }
-    else
-    {
-        return;
-    };
-    
-    info!(logger, "try execute");
-    match run_code(lang, binary_path_str, logger)
-    {
-        Ok(val) => 
+        Ok(output) => 
         {
-            info!(logger, "cod gud");
+            Ok(output)
         },
-        Err(_) => 
+        Err(e) => 
         {
-            info!(logger, "cod not gud");
+            error!(logger, "Runner failed: {:?}", e);
+
+            Err(())
         }
     }
-    info!(logger, "executed");
-
-
 }
