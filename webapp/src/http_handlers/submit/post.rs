@@ -15,7 +15,7 @@ use crate::http_handlers::sessions::Session;
 use crate::config_struct::BackendConfig;
 use crate::filework::save_source;
 
-// Submit code and get compilation results
+/// POST /submit handler
 #[post("/submit", format = "json", data = "<compilation_json>")]
 pub async fn post_submit(
     compilation_json: Json<SubmitInput>, 
@@ -98,7 +98,7 @@ pub async fn post_submit(
     Ok(Json(response_obj))
 }
 
-// Returns language enum required by the compiler and the runner
+/// Returns language enum required by the compiler and the runner
 fn get_lang_type(name: &str) -> Result<CompilerType, ()>
 {
     // TODO: come up with something less hardcoded
@@ -110,6 +110,7 @@ fn get_lang_type(name: &str) -> Result<CompilerType, ()>
     }
 }
 
+/// Tries to compile a given source code
 fn try_compile(
     lang: CompilerType,
     compilation_data: &SubmitInput, 
@@ -139,6 +140,7 @@ fn try_compile(
         compilation_result.compiled_file_name))
 }
 
+/// Tries to execute a given binary
 fn try_execute(
     lang: CompilerType,
     binary_path: &Path, 

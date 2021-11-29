@@ -32,8 +32,8 @@ fn rocket() -> _
     // TODO: cover cases when the path is already full
     backend_config.sessions_data_dir = current_dir().unwrap()
         .join(&backend_config.sessions_data_dir);
-    backend_config.sessions_data_file_dir = current_dir().unwrap()
-        .join(&backend_config.sessions_data_file_dir);
+    backend_config.sessions_data_file = current_dir().unwrap()
+        .join(&backend_config.sessions_data_file);
 
     // Logger
     let decorator = slog_term::TermDecorator::new().build();
@@ -49,19 +49,19 @@ fn rocket() -> _
     // It does so by calling std::process::exit, since Rocket doesn't provide
     // a programmatic way to shut the server down at the time of writing this
     let sessions_tracker;
-    match SessionsTracker::from_file( &backend_config.sessions_data_file_dir)
+    match SessionsTracker::from_file( &backend_config.sessions_data_file)
     {
         Some(tr) => 
         {
             info!(log, "Read sessions data from: {:?}", 
-                backend_config.sessions_data_file_dir);
+                backend_config.sessions_data_file);
             sessions_tracker = Arc::new(Mutex::new(tr
                 .life_duration(&Duration::from_millis(backend_config.session_life_duration))));
         }
         None => 
         {
             info!(log, "Couldn't read sessions data from: {:?}", 
-                backend_config.sessions_data_file_dir);
+                backend_config.sessions_data_file);
             sessions_tracker = Arc::new(Mutex::new(SessionsTracker::new()
                 .life_duration(&Duration::from_millis(backend_config.session_life_duration))))
         }
@@ -112,7 +112,7 @@ fn rocket() -> _
                 let logger = rocket.state::<Arc<slog::Logger>>().unwrap().to_owned();
                 let config = rocket.state::<BackendConfig>().unwrap();
                 let interval = config.sessions_save_interval;
-                let save_path = config.sessions_data_file_dir.clone();
+                let save_path = config.sessions_data_file.clone();
                 info!(logger, "Sessions saver started");
                 
                 thread::spawn(move ||

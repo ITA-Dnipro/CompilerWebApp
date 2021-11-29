@@ -6,7 +6,7 @@ use std::{hash::{Hash, Hasher}, path::{Path, PathBuf}, sync::{Arc, Mutex}};
 use crate::{config_struct::BackendConfig, filework::new_session_folder};
 use super::sessions_tracker::SessionsTracker;
 
-// Anonymous session data guard
+/// Anonymous session data guard
 #[derive(Eq, Clone, Serialize, Deserialize)]
 pub struct Session
 {
@@ -17,6 +17,7 @@ pub struct Session
 
 impl Session
 {
+    /// Create a new Session instance with the given id
     pub fn with_id(id: u128) -> Session
     {
         Session
@@ -27,12 +28,14 @@ impl Session
         }
     }
 
+    /// Session builder method, that sets parent_folder
     pub fn folder(mut self, parent_folder: &Path) -> Session
     {
         self.folder = parent_folder.to_owned();
         self
     }
 
+    /// Establishes a new session, adds it to the sessions tracker
     pub(crate) fn establish_new(
         cookies: &CookieJar<'_>, 
         tracker: &mut SessionsTracker,
@@ -80,7 +83,6 @@ impl<'r> FromRequest<'r> for Session
 
     async fn from_request(req: &'r Request<'_>) -> request::Outcome<Self, Self::Error>
     {
-        // TODO: refactor this ugly piece of code
         let logger = req.rocket().state::<Arc<slog::Logger>>().unwrap();
         let mut tracker = req.rocket().state::<Arc<Mutex<SessionsTracker>>>()
             .unwrap().lock().unwrap_or_else(|_| std::process::exit(1));

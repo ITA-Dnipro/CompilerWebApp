@@ -1,6 +1,7 @@
 use runner::data::output::OutputData;
 use serde::Serialize;
 
+/// Response runner output
 #[derive(Serialize)]
 pub struct RunnerOutput 
 {
@@ -11,6 +12,7 @@ pub struct RunnerOutput
 
 impl RunnerOutput
 {
+    /// Create a RunnerOutput instance from runner's result representation
     pub fn from_runner_result(result: OutputData) -> Self
     {
         RunnerOutput 

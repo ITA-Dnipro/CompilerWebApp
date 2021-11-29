@@ -1,5 +1,6 @@
 use rocket::{Request, http::Status, request::{self, FromRequest, Outcome}};
 
+/// Flow control relevant request headers
 pub struct SubmitHeaders
 {
     pub execute: bool
@@ -7,6 +8,7 @@ pub struct SubmitHeaders
 
 impl SubmitHeaders
 {
+    /// Create a new instance
     pub fn new(execute: bool) -> Self
     {
         Self { execute }

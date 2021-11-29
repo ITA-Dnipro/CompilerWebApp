@@ -3,7 +3,7 @@ use serde::Serialize;
 
 use crate::http_handlers::sessions::Session;
 
-// Context for the index template
+/// Context for the index template
 #[derive(Serialize)]
 struct IndexContext 
 {}

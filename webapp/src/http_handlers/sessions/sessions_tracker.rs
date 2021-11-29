@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use crate::filework::delete_folder;
 use super::session::Session;
 
-// Tracks anonymous user sessions
+/// Anonymous user sessions tracker
 #[derive(Serialize, Deserialize)]
 pub struct SessionsTracker 
 {
@@ -17,6 +17,7 @@ pub struct SessionsTracker
 
 impl SessionsTracker
 {
+    /// Creates a new, empty SessionsTracker
     pub fn new() -> SessionsTracker
     {
         SessionsTracker
@@ -26,6 +27,7 @@ impl SessionsTracker
         }
     }
 
+    /// Deserializes a SessionsTracker istance from a .json file
     pub fn from_file(path: &Path) -> Option<SessionsTracker>
     {
         let contents;
@@ -42,6 +44,7 @@ impl SessionsTracker
         }
     }
 
+    /// Serializes SessionsTracker into a .json file
     pub fn save(&self, path: &Path) -> bool
     {
         let serialized;
@@ -58,27 +61,32 @@ impl SessionsTracker
         }
     }
 
+    /// Builder method, that sets sessions life duration
     pub fn life_duration(mut self, duration: &Duration) -> Self
     {
         self.life_duration = duration.to_owned();
         self
     }
 
+    /// Returns a ref to a tracked session by its id
     pub fn get_session(&self, id: &u128) -> Option<&Session>
     {
         self.sessions.get(&id)
     }
 
+    /// Returns a mut ref to a tracked session by its id
     pub fn get_mut_session(&mut self, id: &u128) -> Option<&mut Session>
     {
         self.sessions.get_mut(id)
     }
 
+    /// Adds a new session to be tracked
     pub fn insert_session(&mut self, session: Session)
     {
         self.sessions.insert(session.id, session);
     }
 
+    /// Clears expired sessions
     pub fn delete_old(&mut self) -> usize
     {
         let now = Utc::now();
