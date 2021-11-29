@@ -28,7 +28,7 @@ function submitForm(event) {
                 buildStdoutBlock(output_div_id, data_json.stdout)
                 buildStderrBlock(error_div_id, data_json.stderr)
                 if ('runner_output' in data_json) {
-                    buildRunSuccessBlock(run_success_div_id, data_json.runner_output.exit_code)
+                    buildRunSuccessBlock(run_success_div_id, data_json)
                     buildStdoutBlock(run_output_div_id, data_json.runner_output.stdout)
                     buildStdoutBlock(run_stderr_div_id, data_json.runner_output.stderr)
                 } else {
@@ -73,9 +73,16 @@ function buildStderrBlock(error_div_id, error_message) {
     }
 }
 
-function buildRunSuccessBlock(div_id, exit_code) {
+function buildRunSuccessBlock(div_id, data_json) {
+    if (data_json === null){
+        div_block.innerHTML = ''
+
+        return
+    }
     let div_block = document.getElementById(div_id)
-    if (exit_code != null) {
+    let stderr = data_json.runner_output.stderr
+    let exit_code = data_json.runner_output.exit_code
+    if (exit_code !== null && !stderr) {
         div_block.innerHTML =
             '<div id="execution-finished" class=="alert alert-info">' +
             "Execution finished with exit code: " + exit_code +
