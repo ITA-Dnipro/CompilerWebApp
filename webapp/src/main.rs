@@ -29,11 +29,6 @@ fn rocket() -> _
     let mut backend_config: BackendConfig = Figment::new()
         .merge(Yaml::file(relative!("BackendConfig.yaml")))
         .extract().unwrap();
-    // TODO: cover cases when the path is already full
-    backend_config.sessions_data_dir = current_dir().unwrap()
-        .join(&backend_config.sessions_data_dir);
-    backend_config.sessions_data_file = current_dir().unwrap()
-        .join(&backend_config.sessions_data_file);
 
     // Logger
     let decorator = slog_term::TermDecorator::new().build();
@@ -41,7 +36,30 @@ fn rocket() -> _
     // Logger uses an async drain, so it doesn't need to be manually managed with a mutex
     // Or at least I believe so, correct me if I'm wrong
     let drain = slog_async::Async::new(drain).build().fuse();
-    let log = Arc::new(slog::Logger::root(drain, o!()));
+    let logger = Arc::new(slog::Logger::root(drain, o!()));
+
+    // Paths validation
+    if !backend_config.sessions_data_dir.is_absolute()
+    {
+        backend_config.sessions_data_dir = current_dir().unwrap()
+            .join(&backend_config.sessions_data_dir);
+    }
+
+    if !backend_config.sessions_data_file.is_absolute()
+    {
+        backend_config.sessions_data_file = current_dir().unwrap()
+            .join(&backend_config.sessions_data_file);
+    }
+
+    if !backend_config.sessions_data_dir.is_dir()
+    {
+        // Sessions directory doesn't exist yet
+        if let Err(_) = std::fs::create_dir(&backend_config.sessions_data_dir)
+        {
+            crit!(logger, "Couldn't create sessions files storage dir at: {:?}", 
+                backend_config.sessions_data_dir);
+        }
+    }
 
     // Sessions tracker, wrapped in a mutex because it has to be mutable across threads
     // If the mutex gets poisoned the entire server should shutdown, 
@@ -53,21 +71,21 @@ fn rocket() -> _
     {
         Some(tr) => 
         {
-            info!(log, "Read sessions data from: {:?}", 
+            info!(logger, "Read sessions data from: {:?}", 
                 backend_config.sessions_data_file);
             sessions_tracker = Arc::new(Mutex::new(tr
                 .life_duration(&Duration::from_millis(backend_config.session_life_duration))));
         }
         None => 
         {
-            info!(log, "Couldn't read sessions data from: {:?}", 
+            info!(logger, "Couldn't read sessions data from: {:?}", 
                 backend_config.sessions_data_file);
             sessions_tracker = Arc::new(Mutex::new(SessionsTracker::new()
                 .life_duration(&Duration::from_millis(backend_config.session_life_duration))))
         }
     }
 
-    info!(log, "Backend config:\n {:?}", backend_config);
+    info!(logger, "Backend config:\n {:?}", backend_config);
 
     rocket::build()
         // index.html getters
@@ -78,7 +96,7 @@ fn rocket() -> _
         // Server states
         .manage(backend_config)
         .manage(sessions_tracker)
-        .manage(log)
+        .manage(logger)
         // Templaiting fairing
         .attach(rocket_dyn_templates::Template::fairing())
         // Sessions cleaner thread startup
