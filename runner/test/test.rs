@@ -2,9 +2,9 @@
 #[cfg(test)]
 mod tests {
     use runner::run_code;
-    use std::fs::{remove_file, File};
+    use std::{fs::{remove_file, File}, io::Read};
     use compiler::data::input_data::compiler_type::{CompilerType};
-    use std::path::{Path};
+    use std::{str, path::{Path, PathBuf}, thread};
     use {slog, slog::o};
 
     const TEST_DIR: &str = "test/data";
@@ -15,7 +15,8 @@ mod tests {
             slog::Discard, 
             o!("key1" => "value1", "key2" => "value2")
         ); 
-        run_code(CPP,"test/lib/libcasual_cpp.so", &root).unwrap();
+        let path = PathBuf::from("test/lib/libcasual_cpp.so");
+        run_code(CPP,path, &root).unwrap();
         assert!(true);
     }
 
@@ -28,12 +29,13 @@ mod tests {
         ); 
         const FILE_NAME: &str = "test/data/new_file_created_with_so";
         let file_path = Path::new(FILE_NAME);
+        
         if file_path.exists() {
-            remove_file(FILE_NAME)
-                .expect("Could not remove file");
+            remove_file(FILE_NAME).unwrap();
         }
-        run_code(CPP,"test/lib/libcreate_new_file.so", &root).unwrap();
-        assert!(! file_path.exists());
+        let path = PathBuf::from("test/lib/libnew_file.so");
+        run_code(CPP,path, &root).unwrap();
+        assert!(file_path.exists());
     }
 
     #[test]
@@ -47,9 +49,9 @@ mod tests {
         if !file_path.exists() {
             File::create(file_path)
                 .expect("Could not create testfile.");
-        }
-        
-        run_code(CPP, "test/lib/libremove_file.so", &root).unwrap();
+        };
+        let path = PathBuf::from("test/lib/libremove_file.so");
+        run_code(CPP, path, &root).unwrap();
         let file_path = Path::new(TEST_DIR).join(FILE_NAME);
         assert!(file_path.exists());
     }
@@ -60,8 +62,8 @@ mod tests {
             slog::Discard, 
             o!("key1" => "value1", "key2" => "value2")
         ); 
-        let output 
-            = run_code(CPP, "test/lib/libsimple_print.so", &root);
+        let path = PathBuf::from("test/lib/libsimple_print.so");
+        let output= run_code(CPP, path, &root);
         match output {
             Err(_) => assert!(false),
             Ok(output_data) => {
@@ -76,22 +78,63 @@ mod tests {
             slog::Discard, 
             o!("key1" => "value1", "key2" => "value2")
         ); 
-        let output 
-            = run_code(CPP, "no such lib", &root);
+        let path = PathBuf::from("no such lib");
+        let output = run_code(CPP, path, &root);
         match output {
-            Ok(_) => assert!(true),
-            Err(_) => assert!(false)
+            Ok(_) => assert!(false),
+            Err(_) => assert!(true)
         }
     }
 
     #[test]
-    #[ignore]
     fn loop_cpp() {
         let root = slog::Logger::root(
             slog::Discard, 
             o!("key1" => "value1", "key2" => "value2")
         ); 
-        run_code(CPP, "test/lib/libloop.so", &root).unwrap();
-        assert!(true);
+        let path = PathBuf::from("test/lib/libloop.so");
+        let handle  = thread::spawn(move || {       
+            run_code(CPP, path, &root).unwrap();
+            //assert!(false);
+            return;
+            //std::process::exit(0);
+        });
+        match handle.join() {
+            Err(err) => println!("{:?}", err),
+            Ok(_) => {}
+        }
+        //handle.join().unwrap();
+        //thread::sleep(Duration::new(2, 0));
+        //panic!("shared function runs too long");
+    }
+
+    #[test]
+    fn runtime_error() {
+        let root = slog::Logger::root(
+            slog::Discard, 
+            o!("key1" => "value1", "key2" => "value2")
+        ); 
+        let path = PathBuf::from("test/lib/libruntime_error.so");
+        let output = run_code(CPP, path, &root).unwrap();
+        assert_eq!(output.stderr, "");
+    }
+    
+    #[test]
+    fn change_file_content() {
+        const CONTENT_FILE: &str = "test/data/file_with_content.txt";
+        let root = slog::Logger::root(
+            slog::Discard, 
+            o!("key1" => "value1", "key2" => "value2")
+        );
+        let mut file = File::open(CONTENT_FILE).unwrap();
+        let mut buf = Vec::new();
+        file.read_to_end(&mut buf).unwrap();
+        drop(file);
+        let path = PathBuf::from("test/lib/librewrite_file_content.so");
+        run_code(CPP, path, &root).unwrap();
+        let mut file = File::open(CONTENT_FILE).unwrap();
+        let mut buf_after = Vec::new();
+        file.read_to_end(&mut buf_after).unwrap();
+        assert_eq!(str::from_utf8(&buf), str::from_utf8(&buf_after));
     }
 }
