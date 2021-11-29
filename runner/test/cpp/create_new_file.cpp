@@ -16,6 +16,6 @@ int main()
         output << "Hello from shared object" << std::endl;
         output.close();
     } catch (const std::exception& e) {
-        return 0;
+        return 19;
     }
 }

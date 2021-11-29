@@ -11,6 +11,7 @@ Cargo.lock
 
 # Webapp backend saved files folder
 webapp/sessions_data
+
 # TLS certificates
 webapp/certificates
 webapp/tempdata

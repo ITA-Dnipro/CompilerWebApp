@@ -3,7 +3,7 @@ pub mod data;
 mod filter;
 mod config;
 mod runner;
-use std::{str, path::PathBuf};
+use std::{path::PathBuf};
 use crate::data::output::OutputData;
 use crate::data::error::Error;
 use compiler::data::input_data::compiler_type::CompilerType;

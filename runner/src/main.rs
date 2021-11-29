@@ -2,11 +2,10 @@ extern crate slog;
 extern crate slog_term;
 extern crate slog_async;
 use runner::run_code;
-use runner::data::error::Error;
 use std::fs::{remove_file, File};
 use std::path::{Path, PathBuf};
 use compiler::data::input_data::compiler_type::{CompilerType};
-use slog::{o, info, Logger};
+use slog::{o, Logger};
 use crate::slog::Drain;
 
 
