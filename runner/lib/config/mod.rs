@@ -4,7 +4,7 @@ use serde_yaml;
 use crate::Error;
 use std::path::PathBuf;
 use std::fs::File;
-use slog::{Logger, error, info, o, Drain, debug};
+use slog::{Logger, error, debug};
 
 
 #[derive(Deserialize, Debug)]
@@ -74,20 +74,22 @@ fn get_config_reader(logger: &Logger) -> Option<File>
         return Some(reader)
     }
     error!(logger, "Failed to open config file!");
-    
+
     None
 }
 
 #[test]
 fn parse_some_config()
 {
+    use slog::{o, Drain};
+
     let decorator = slog_term::TermDecorator::new().build();
     let drain = slog_term::FullFormat::new(decorator).build().fuse();
     let drain = slog_async::Async::new(drain).build().fuse();
     let log = slog::Logger::root(drain, o!());
     const ENV_VAR: &str = "CWA_RUNNER_CONFIG_PATH";
     env::set_var(ENV_VAR, "test/data/test_config.yaml");
-    let mut config =  Config::new(&log).unwrap();
+    let config =  Config::new(&log).unwrap();
     println!("{:?}", config);
     //println!("{:?}", config.entry("execution_limit".to_string()));
     //println!("{:?}", config.get(&"execution_limit".to_string()));
