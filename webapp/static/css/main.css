@@ -41,6 +41,11 @@ select {
     width: 50px;
 }
 
+#if-execute-checkbox {
+    display: flex;
+    flex-direction: row;
+}
+
 .wide {
     width: 100%;
 }
