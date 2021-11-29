@@ -48,8 +48,7 @@ impl<'time> Runner<'time> for CppRunner<'time>
             self.shared_object_path.clone(), 
             self.config.entry_point.clone()
         )?;
-        let mut shh_output = shh::stdout()?
-            .chain(shh::stderr()?);
+        let mut shh_output = shh::stdout()?;
 
         match unsafe {fork() } {
             Ok(ForkResult::Parent{child}) => {
