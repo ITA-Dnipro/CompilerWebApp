@@ -74,12 +74,12 @@ function buildStderrBlock(error_div_id, error_message) {
 }
 
 function buildRunSuccessBlock(div_id, data_json) {
+    let div_block = document.getElementById(div_id)
     if (data_json === null){
         div_block.innerHTML = ''
 
         return
     }
-    let div_block = document.getElementById(div_id)
     let stderr = data_json.runner_output.stderr
     let exit_code = data_json.runner_output.exit_code
     if (exit_code !== null && !stderr) {
