@@ -103,6 +103,3 @@ fn extract_key_and_value(compiler_option: &String) -> Result<(String, String), &
         Err("Option string is empty")
     }
 }
-
-
-
