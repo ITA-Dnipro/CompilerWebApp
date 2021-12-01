@@ -1,13 +1,12 @@
 use chrono::{DateTime, Utc};
-use rocket::{Request, http::{Cookie, CookieJar, Status},
-    request::{self, FromRequest}};
+use rocket::{Request, http::{Cookie, CookieJar, Status}, request::{self, FromRequest}};
 use serde::{Deserialize, Serialize};
 use std::{hash::{Hash, Hasher}, path::{Path, PathBuf}, sync::{Arc, Mutex}};
 
 use crate::{config_struct::BackendConfig, filework::new_session_folder};
 use super::sessions_tracker::SessionsTracker;
 
-// Anonymous session data guard
+/// Anonymous session data guard
 #[derive(Eq, Clone, Serialize, Deserialize)]
 pub struct Session
 {
@@ -18,6 +17,7 @@ pub struct Session
 
 impl Session
 {
+    /// Create a new Session instance with the given id
     pub fn with_id(id: u128) -> Session
     {
         Session
@@ -28,12 +28,14 @@ impl Session
         }
     }
 
+    /// Session builder method, that sets parent_folder
     pub fn folder(mut self, parent_folder: &Path) -> Session
     {
         self.folder = parent_folder.to_owned();
         self
     }
 
+    /// Establishes a new session, adds it to the sessions tracker
     pub(crate) fn establish_new(
         cookies: &CookieJar<'_>, 
         tracker: &mut SessionsTracker,
@@ -59,10 +61,18 @@ impl Session
         
         tracker.insert_session(Session::with_id(session_id)
             .folder(&folder));
-        cookies.add(Cookie::new("session_id", session_id_str));
+        cookies.add_private(Cookie::build("session_id", session_id_str)
+            .http_only(true)
+            .finish());
+
         info!(logger, "New session established: {}", session_id);
 
         Some(session_id)
+    }
+
+    pub(crate) fn update_session(session: &mut Session)
+    {
+        session.last_connection = Utc::now();   
     }
 }
 
@@ -73,21 +83,21 @@ impl<'r> FromRequest<'r> for Session
 
     async fn from_request(req: &'r Request<'_>) -> request::Outcome<Self, Self::Error>
     {
-        let logger = req.rocket().state::<slog::Logger>().unwrap();
-        // TODO: there theoretically is a case when mutex locking fails
-        let mut tracker = req.rocket()
-            .state::<Arc<Mutex<SessionsTracker>>>().unwrap().lock().unwrap();
+        let logger = req.rocket().state::<Arc<slog::Logger>>().unwrap();
+        let mut tracker = req.rocket().state::<Arc<Mutex<SessionsTracker>>>()
+            .unwrap().lock().unwrap_or_else(|_| std::process::exit(1));
         let config = req.rocket().state::<BackendConfig>().unwrap();
+        let cookies = req.cookies();
 
-        match req.cookies().get("session_id")
+        match cookies.get_private("session_id")
         {
             // Check if a request already has session id
-            Some(session_id) => 
+            Some(session_cookie) => 
             {
-                info!(logger, "Request from session: {}", session_id);
+                info!(logger, "Request from session: {}", session_cookie);
 
                 let parsed_id;
-                match session_id.value().parse::<u128>()
+                match session_cookie.value().parse::<u128>()
                 {
                     Ok(parsed) => parsed_id = parsed,
                     Err(_) => // Received cookie with corrupted session id
@@ -97,7 +107,10 @@ impl<'r> FromRequest<'r> for Session
                         match Session::establish_new(req.cookies(),&mut tracker,
                             &config.sessions_data_dir, logger)
                         {
-                            Some(session_id) =>  return request::Outcome::Success(Self::with_id(session_id)),
+                            Some(session_id) =>  
+                            {
+                                return request::Outcome::Success(Self::with_id(session_id));
+                            }
                             None => 
                             {
                                 error!(logger, "Couldn't establish a session");
@@ -110,9 +123,9 @@ impl<'r> FromRequest<'r> for Session
                 
                 match tracker.get_mut_session(&parsed_id)
                 {
-                    Some(session) =>
+                    Some(session) => // Request from a tracked session
                     {
-                        session.last_connection = Utc::now();
+                        Session::update_session(session);
 
                         request::Outcome::Success(session.to_owned())
                     },
@@ -131,7 +144,10 @@ impl<'r> FromRequest<'r> for Session
                 match Session::establish_new(req.cookies(),
                     &mut tracker, &config.sessions_data_dir, logger)
                 {
-                    Some(session_id) =>  return request::Outcome::Success(Self::with_id(session_id)),
+                    Some(session_id) => 
+                    {
+                        return request::Outcome::Success(Self::with_id(session_id))
+                    },
                     None => 
                     {
                         error!(logger, "Couldn't establish a session");

@@ -2,40 +2,16 @@
 use rocket::serde::{Serialize, Deserialize};
 use compiler::data::output_data;
 
-#[derive(Deserialize)]
-pub struct InputData
-{
-    pub lang: String,
-    pub options: String,
-    pub code: String
-}
+/// POST /submit request body struct
+pub mod submit_input;
+/// POST /submit response body struct
+pub mod submit_output;
+/// POST /submit request headers struct
+pub mod submit_headers;
+/// runner results struct
+pub mod runner_output;
 
-#[derive(Serialize)]
-pub struct OutputData
-{
-    pub status_code: i32,
-    pub stdout: String,
-    pub stderr: String
-}
-
-impl OutputData
-{
-    pub fn new(status_code: i32, stdout: &str, stderr: &str) -> OutputData
-    {
-        OutputData {
-            status_code: status_code,
-            stdout: String::from(stdout),
-            stderr: String::from(stderr)
-        }
-    }
-
-    pub fn from_compiler_result(data: &output_data::OutputData) -> OutputData
-    {
-        OutputData
-        {
-            status_code: data.status_code.unwrap_or(1),
-            stdout: data.stdout.clone(),
-            stderr: data.stderr.clone()
-        }
-    }
-}
+pub use submit_input::SubmitInput;
+pub use submit_output::SubmitOutput;
+pub use submit_headers::SubmitHeaders;
+pub use runner_output::RunnerOutput;
