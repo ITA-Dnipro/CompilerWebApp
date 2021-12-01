@@ -38,7 +38,8 @@ impl<'time> CppRunner<'time>
 
 impl<'time> Runner<'time> for CppRunner<'time> 
 {
-    fn run(&self) -> Result<OutputData, Error> {
+    fn run(&self) -> Result<OutputData, Error> 
+    {
         let bpf_prg = build_filter(self.logger)?;
 
         trace!(self.logger, "Shared object path: {:?}", self.shared_object_path);
@@ -48,10 +49,13 @@ impl<'time> Runner<'time> for CppRunner<'time>
             self.shared_object_path.clone(), 
             self.config.entry_point.clone()
         )?;
+        let shared_func = lib.shared_func()?;
         let mut shh_output = shh::stdout()?;
 
-        match unsafe {fork() } {
-            Ok(ForkResult::Parent{child}) => {
+        match unsafe {fork() } 
+        {
+            Ok(ForkResult::Parent{child}) => 
+            {
                 let (exit_code , err_msg)= self.join_child(child)?;
                 let mut buf: Vec<u8> = Vec::new();
                 shh_output.read_to_end(&mut buf)?;
@@ -62,12 +66,13 @@ impl<'time> Runner<'time> for CppRunner<'time>
  
                 return Ok(output_data);
             }
-            Ok(ForkResult::Child) => {
+            Ok(ForkResult::Child) => 
+            {
                 let exit_code = match apply_filter(&bpf_prg) {
                     Ok(_) => 
                     {
                         unsafe { 
-                            lib.shared_func()?.get()()
+                            shared_func.get()()
                         }
                     },
                     Err(_) => 
