@@ -1,15 +1,9 @@
 use std::collections::HashMap;
 
-// TODO use typedef for compiler options
 use regex::Regex;
 use std::collections::HashSet;
 use std::iter::FromIterator;
 
-/*
-const BOTH_OPTIONS_EXAMPLE: &str = concat!(
-    "-a -bb -ccc -ddd -  -- --- --v --verbose", 
-    " -a=va -bb=vbb -ccc=vccc -ddd=vddd -e=  -eee= --e= ---- -=- ====");
-*/
 
 fn to_hashset(vector: &Vec<String>) -> HashSet<String> {
     HashSet::from_iter(vector.iter().cloned())
@@ -24,10 +18,8 @@ pub(crate) fn filter_compiler_options(options: &Vec<String>, options_whitelist: 
     let options_set: HashSet<String>  = to_hashset(options);
     let options_whitelist_set: HashSet<String> = to_hashset(options_whitelist);
 
-    //let accepted_options_set: HashSet<&String>  = options_set.intersection(&options_whitelist_set).collect();
     let declined_options_set: HashSet<&String> =  options_set.difference(&options_whitelist_set).collect();
 
-    //let accepted_options: Vec<String> = accepted_options_set.into_iter().map(|s| s.to_string()).collect();    
     let declined_options: Vec<String> = declined_options_set.into_iter().map(|s| s.to_string()).collect();
 
     Ok(declined_options)  
@@ -54,7 +46,6 @@ pub(crate) fn parse_compiler_options(options: &Vec<String>) -> Result<HashMap<St
 
                 Err(_e) => {
                     // TODO process incorrect options
-                    //return Err(e)
                 }
             }
         }
@@ -86,8 +77,6 @@ fn extract_key_and_value(compiler_option: &String) -> Result<(String, String), &
                     }
 
                     None => {
-                        //let mut error_message = format!("Compiler option value not found in option: {}", compiler_option);
-                        //return Err(error_message.as_ref())
                         return Err("Compiler option value not found")
                     }
                 }
@@ -103,8 +92,6 @@ fn extract_key_and_value(compiler_option: &String) -> Result<(String, String), &
                     }
 
                     None => {
-                        //let mut error_message = format!("Compiler option key not found in option: {}", compiler_option);
-                        //return Err(&error_message.as_ref())
                         return Err("Compiler option key not found")
                     }
                 }
@@ -116,6 +103,3 @@ fn extract_key_and_value(compiler_option: &String) -> Result<(String, String), &
         Err("Option string is empty")
     }
 }
-
-
-

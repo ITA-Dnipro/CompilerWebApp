@@ -61,10 +61,7 @@ pub fn run_compilation(input_data: &InputData) -> Result<OutputData, &'static st
 
     
     let raw_options = input_data.compiler_options.clone();
-  
-    // TODO add to logger
-    //println!("Example string: {}", BOTH_OPTIONS_EXAMPLE);
-    
+      
     let mut config_file_path: PathBuf = env::current_dir().unwrap();
     config_file_path = config_file_path.join(CONFIG_FILE_NAME);
     
@@ -100,16 +97,6 @@ pub fn run_compilation(input_data: &InputData) -> Result<OutputData, &'static st
                                 else { 
                                     format!("{}", key) 
                                 }).collect();
-                        
-                        // TODO add to logger
-                        /*
-                            println!("Declined options list:");
-            
-                            for option in declined_options {
-                                println!("Option key: {}, option value: {}", option.0, option.1);
-                            }
-                        */   
-                        
                     } 
                    
                     accepted_options = parsed_options.into_iter()
@@ -123,15 +110,6 @@ pub fn run_compilation(input_data: &InputData) -> Result<OutputData, &'static st
                                 }).collect();                   
 
                     updated_input_data.compiler_options = accepted_options.join(" ");
-
-                    // TODO add to logger
-                    /*
-                    println!("Accepted options list:");
-            
-                    for option in accepted_options {
-                        println!("Option: {}", option);
-                    }
-                    */
                 }
         
                 Err(error) => {
@@ -142,8 +120,6 @@ pub fn run_compilation(input_data: &InputData) -> Result<OutputData, &'static st
         }
 
         Err(e) => {
-            // TODO add to logger
-            //println!("Parsing error: {}", e);
             return Err(e);
         }
     }
@@ -154,7 +130,6 @@ pub fn run_compilation(input_data: &InputData) -> Result<OutputData, &'static st
     let mut output_data = compiler.compile(&updated_input_data)?;
     
     output_data.stderr.push_str("Declined compiler options list:\n");
-    //output_data.stderr.push_str(&declined_keys.join(", ").to_owned());
     for key in declined_options {
         output_data.stderr.push_str("-");
         output_data.stderr.push_str(&key.to_owned());
@@ -212,6 +187,4 @@ pub(crate) fn select_compiler_options_whitelist(compiler_type: &CompilerType, co
             return config.rustc.options_whitelist.clone();
         }
     } 
-
-
 }

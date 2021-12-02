@@ -19,8 +19,7 @@ fn main() -> std::io::Result<()> {
         compiler_type: CompilerType::Cpp,
         source_code_file_path: PathBuf::from("./temp/src/test.cpp"),
         compiled_directory_path: PathBuf::from("./temp/bin/"), 
-        compiler_options: String::from("-g --std=c++17 -Wall -o"),
-        //compiler_options: String::new(),
+        compiler_options: String::from("-g --std=c++17 -Wall -o"),        
     };
 
     let output_data = run_compilation(&input_data);
@@ -45,9 +44,4 @@ fn main() -> std::io::Result<()> {
             Err(Error::new(ErrorKind::Other, e))
         }
     } 
-}
-    // TODO remove compiled bin file from directory (call "rm")
-    // TODO read about using env variables - in Ubuntu "export varName = varValue"
-    //   read varName with program start - validate varValue!
-    // TODO check g++ compiler installed
-    // TODO test - assert!(output.status.success()); 
+}    
