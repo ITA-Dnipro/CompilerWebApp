@@ -1,7 +1,7 @@
 use chrono::{DateTime, Utc};
 use rocket::{Request, http::{Cookie, CookieJar, Status}, request::{self, FromRequest}};
 use serde::{Deserialize, Serialize};
-use std::{hash::{Hash, Hasher}, path::{Path, PathBuf}, sync::{Arc, Mutex}};
+use std::{hash::{Hash, Hasher}, path::{Path, PathBuf}, sync::Arc};
 
 use crate::{config_struct::BackendConfig, filework::new_session_folder};
 use super::sessions_tracker::SessionsTracker;
@@ -38,7 +38,7 @@ impl Session
     /// Establishes a new session, adds it to the sessions tracker
     pub(crate) fn establish_new(
         cookies: &CookieJar<'_>, 
-        tracker: &mut SessionsTracker,
+        tracker: &SessionsTracker,
         parent_folder: &Path,
         logger: &slog::Logger) 
         -> Option<u128>
@@ -70,9 +70,9 @@ impl Session
         Some(session_id)
     }
 
-    pub(crate) fn update_session(session: &mut Session)
+    pub(crate) fn update_session(tracker: &Arc<SessionsTracker>, session_id: &u128)
     {
-        session.last_connection = Utc::now();   
+        tracker.set_last_connection(session_id, Utc::now()); 
     }
 }
 
@@ -84,8 +84,7 @@ impl<'r> FromRequest<'r> for Session
     async fn from_request(req: &'r Request<'_>) -> request::Outcome<Self, Self::Error>
     {
         let logger = req.rocket().state::<Arc<slog::Logger>>().unwrap();
-        let mut tracker = req.rocket().state::<Arc<Mutex<SessionsTracker>>>()
-            .unwrap().lock().unwrap_or_else(|_| std::process::exit(1));
+        let mut tracker = req.rocket().state::<Arc<SessionsTracker>>().unwrap();
         let config = req.rocket().state::<BackendConfig>().unwrap();
         let cookies = req.cookies();
 
@@ -104,7 +103,7 @@ impl<'r> FromRequest<'r> for Session
                     {
                         info!(logger, "Corrupted session ID");
 
-                        match Session::establish_new(req.cookies(),&mut tracker,
+                        match Session::establish_new(req.cookies(), tracker,
                             &config.sessions_data_dir, logger)
                         {
                             Some(session_id) =>  
@@ -121,13 +120,13 @@ impl<'r> FromRequest<'r> for Session
                     }
                 }
                 
-                match tracker.get_mut_session(&parsed_id)
+                match tracker.get_session(&parsed_id)
                 {
                     Some(session) => // Request from a tracked session
                     {
-                        Session::update_session(session);
+                        Session::update_session(tracker, &parsed_id);
 
-                        request::Outcome::Success(session.to_owned())
+                        request::Outcome::Success(session)
                     },
                     None =>  // Received cookie with untracked session id
                     {

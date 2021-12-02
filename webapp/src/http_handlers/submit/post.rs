@@ -11,7 +11,7 @@ use compiler::handler::run_compilation;
 use runner::{run_code, data::output::OutputData};
 
 use crate::http_handlers::submit::structs::{SubmitInput, SubmitOutput, SubmitHeaders};
-use crate::http_handlers::sessions::Session;
+use crate::http_handlers::sessions::{Session, SessionsTracker};
 use crate::config_struct::BackendConfig;
 use crate::filework::save_source;
 
@@ -21,11 +21,11 @@ pub async fn post_submit(
     compilation_json: Json<SubmitInput>, 
     submit_options: SubmitHeaders,
     config: &State<BackendConfig>, 
-    logger: &State<Arc<Logger>>, 
+    logger: &State<Arc<Logger>>,
+    _tracker: &State<Arc<SessionsTracker>>, // TODO: save generated files' paths
     session: Session) 
     -> Result<Json<SubmitOutput>, Custom<()>>
 {
-    
     if !config.lang_extensions.contains_key(&compilation_json.lang)
     {
         return Ok(Json(SubmitOutput::new(-1, "", "Unknown language")));
