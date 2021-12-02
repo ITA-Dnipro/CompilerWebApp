@@ -75,6 +75,14 @@ impl SessionsTracker
     {
         self.sessions.lock().unwrap_or_else(|_| std::process::exit(1))
     }
+    
+    pub fn set_source_file(&self, session_id: &u128, source_path: &Path)
+    {
+        if let Some(session) = self.lock().get_mut(session_id)
+        {
+            session.set_source(source_path);
+        }
+    }
 
     pub fn set_last_connection(&self, session_id: &u128, new_date: DateTime<Utc>)
     {

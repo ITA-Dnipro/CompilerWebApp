@@ -22,7 +22,7 @@ pub async fn post_submit(
     submit_options: SubmitHeaders,
     config: &State<BackendConfig>, 
     logger: &State<Arc<Logger>>,
-    _tracker: &State<Arc<SessionsTracker>>, // TODO: save generated files' paths
+    tracker: &State<Arc<SessionsTracker>>,
     session: Session) 
     -> Result<Json<SubmitOutput>, Custom<()>>
 {
@@ -43,6 +43,7 @@ pub async fn post_submit(
         Some(path) => source_file = path,
         None => return Err(Custom(Status::InternalServerError, ()))
     }
+    tracker.set_source_file(&session.id, &source_file);
     trace!(logger, "Source code file created: {:?}", source_file);
 
     // Compilation

@@ -12,7 +12,8 @@ pub struct Session
 {
     pub id: u128,
     pub last_connection: DateTime<Utc>,
-    pub folder: PathBuf
+    pub folder: PathBuf,
+    pub source_path: PathBuf
 }
 
 impl Session
@@ -24,7 +25,8 @@ impl Session
         {
             id,
             last_connection: Utc::now(),
-            folder: PathBuf::new()
+            folder: PathBuf::new(),
+            source_path: PathBuf::new()
         }
     }
 
@@ -32,7 +34,13 @@ impl Session
     pub fn folder(mut self, parent_folder: &Path) -> Session
     {
         self.folder = parent_folder.to_owned();
+
         self
+    }
+
+    pub fn set_source(&mut self, source_path: &Path)
+    {
+        self.source_path = source_path.to_owned();
     }
 
     /// Establishes a new session, adds it to the sessions tracker
