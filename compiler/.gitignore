@@ -8,3 +8,8 @@ Cargo.lock
 
 # folder for temporary compiled binary files
 /temp/bin/
+
+
+# launch.json
+.vscode/*
+!.vscode/launch.json

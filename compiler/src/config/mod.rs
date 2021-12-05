@@ -13,13 +13,13 @@ use common::Common;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub (crate) struct Config {
-    pub common: Common,
-    pub gcc: Compiler,
-    pub rustc: Compiler,
+    pub(crate) common: Common,
+    pub(crate) gcc: Compiler,
+    pub(crate) rustc: Compiler,
 }
 
 impl Config {
-    pub fn new(common: Common,
+    pub(crate) fn new(common: Common,
                gcc: Compiler,
                rustc: Compiler) -> Self {
         Self {
@@ -34,7 +34,7 @@ impl Config {
 pub(crate) fn load_config(config_file_path: PathBuf) -> Result<Config, &'static str> {
     
     if !Path::new(config_file_path.to_str().unwrap()).exists() {
-        let config = load_default_config().unwrap(); 
+        let config = get_default_config().unwrap(); 
 
         write_config(&config, &config_file_path).unwrap();
 
@@ -47,25 +47,17 @@ pub(crate) fn load_config(config_file_path: PathBuf) -> Result<Config, &'static 
         }
 
         Err(_) => {
-            let config = load_default_config().unwrap(); 
+            let config = get_default_config().unwrap(); 
 
             write_config(&config, &config_file_path).unwrap();
 
             return Ok(config) 
         }
     }
-    
-    /*
-    let config = Figment::new()
-                    .merge(Yaml::file(config_file_path))
-                    .extract().unwrap(); 
-    */
-
-        
 }
 
 
-pub(crate) fn load_default_config() -> Result<Config, &'static str> {
+pub(crate) fn get_default_config() -> Result<Config, &'static str> {
 
     // common
     let log_level: u32 = 1;
@@ -107,7 +99,5 @@ pub(crate) fn write_config(config: &Config, file_path: &PathBuf) -> Result<(), (
         Err(_) => {
             return Err(())
         }
-    }
-
-    
+    }    
 }

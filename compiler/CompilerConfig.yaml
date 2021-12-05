@@ -18,4 +18,3 @@ rustc:
     - "--version"
     - "--verbose"
     - "-Wall"
-
