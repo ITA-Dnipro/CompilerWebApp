@@ -4,6 +4,17 @@ use std::path::{PathBuf, Path};
 
 use slog::Logger;
 
+/// ## Creates a folder for a new session.
+/// 
+/// New folder's name is it's respective session's id.
+/// ----
+/// Args:
+/// * `parent_folder` - a folder in which the new folder will be created;
+/// * `parent_folder` - session's id;
+/// * `logger` - a logger to log to.
+/// ----
+/// ## Returns:
+/// A path to the created folder, or `None` if it could not be created.
 pub fn new_session_folder(
     parent_folder: &Path, 
     session_id: &str,
@@ -28,6 +39,14 @@ pub fn new_session_folder(
     }
 }
 
+/// ## Deletes a specified folder.
+/// ----
+/// Args:
+/// ---
+/// * `folder` - path to the folder to delete.
+/// ----
+/// ## Returns:
+/// `true` if the folder was deleted, `false` if it wasn't.
 pub fn delete_folder(
     folder: &Path
 ) -> bool
@@ -39,6 +58,23 @@ pub fn delete_folder(
     }
 }
 
+/// ## Saves session's source code into a file.
+/// 
+/// New file's name is `"source-{session_id}"`.
+/// 
+/// ----
+/// Args:
+/// ---
+/// * `source_code` - souce code to write into the file;
+/// * `lang_extension` - new file's extension;
+/// * `parent_folder` - a folder to create the file in;
+/// * `session_id` - current session's id;
+/// * `logger` - a logger to log to.
+/// ----
+/// ## Returns:
+/// A path to the new file, or `None` if it could not be created.
+/// 
+/// `None` can occur when the file itself could not be created, or it couldn't be written to.
 pub fn save_source(
     source_code: &str, 
     lang_extension: &str,
@@ -84,6 +120,14 @@ pub fn save_source(
     Some(PathBuf::from(input_file))
 }
 
+/// ## Deletes a specified file.
+/// ----
+/// Args:
+/// ---
+/// * `filename` - path to the file to delete.
+/// ----
+/// ## Returns:
+/// `true` if the file was deleted, `false` if it wasn't.
 pub fn delete_file(filename: &Path) -> bool
 {
     match remove_file(filename)

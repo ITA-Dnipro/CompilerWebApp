@@ -22,6 +22,7 @@ use config_struct::BackendConfig;
 
 use http_handlers::{submit, sessions::SessionsTracker, index};
 
+/// Launches the server
 #[launch]
 fn rocket() -> _ 
 {
@@ -125,7 +126,7 @@ fn rocket() -> _
                     .read().unwrap();
                 let interval = config.sessions_save_interval;
                 let save_path = config.sessions_data_file.clone();
-                
+
                 drop(config);
                 info!(logger, "Sessions saver started");
                 

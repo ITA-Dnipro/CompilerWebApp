@@ -15,7 +15,19 @@ use crate::http_handlers::sessions::{Session, SessionsTracker};
 use crate::config_struct::BackendConfig;
 use crate::filework::save_source;
 
-/// POST /submit handler
+/// ## `POST /submit` handler.
+/// ----
+/// ## Args
+/// * `compilation_json` - request body JSON with compilation data;
+/// * `submit_options` - additional submission options;
+/// * `config_lock` - `RwLock` with server configuration. Only locked for reading;
+/// * `logger` - logger to log to;
+/// * `tracker` - `Arc` with server sessions tracker object;
+/// * `session` - info about current user session.
+/// ----
+/// Returns:
+/// ---
+/// `Result` with `Json<SubmitOutput>` as `Ok` value, or a response of `500 internal server error`.
 #[post("/submit", format = "json", data = "<compilation_json>")]
 pub async fn post_submit(
     compilation_json: Json<SubmitInput>, 
@@ -89,7 +101,7 @@ pub async fn post_submit(
         {
             Ok(exec_output) => 
             {
-                response_obj.append_runner_output(exec_output);
+                response_obj.set_runner_output(exec_output);
             },
             Err(_) => 
             {

@@ -1,6 +1,6 @@
-// Anonymous user sessions
+/// Anonymous user sessions
 pub mod session;
-// Anonymous user sessions tracking
+/// Anonymous user sessions tracking
 pub mod sessions_tracker;
 
 pub use session::Session;

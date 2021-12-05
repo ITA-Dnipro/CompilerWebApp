@@ -1,26 +1,16 @@
 use rocket_dyn_templates::{Template};
-use serde::Serialize;
 
 use crate::http_handlers::sessions::Session;
+use super::index_context::IndexContext;
 
-/// Context for the index template
-#[derive(Serialize)]
-struct IndexContext 
-{
-    source_code: String
-}
-
-impl IndexContext
-{
-    pub fn new(code: String) -> IndexContext
-    {
-        IndexContext 
-        {
-            source_code: code
-        }
-    }
-}
-
+/// ## `GET /` handler.
+/// ----
+/// Args:
+/// ---
+/// * `session` - current session.
+/// ----
+/// Returns:
+/// A rendered `index.html.tera`. Is session doesn't store user's source code yet, it's value will be `""`.
 #[get("/")]
 pub async fn get_index(session: Session) -> Template
 {

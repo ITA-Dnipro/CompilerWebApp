@@ -2,13 +2,13 @@
 use rocket::serde::{Serialize, Deserialize};
 use compiler::data::output_data;
 
-/// POST /submit request body struct
+/// `POST /submit` request body struct
 pub mod submit_input;
-/// POST /submit response body struct
+/// `POST /submit` response body struct
 pub mod submit_output;
-/// POST /submit request headers struct
+/// `POST /submit` request headers struct
 pub mod submit_headers;
-/// runner results struct
+/// `runner` crate code execution results struct
 pub mod runner_output;
 
 pub use submit_input::SubmitInput;

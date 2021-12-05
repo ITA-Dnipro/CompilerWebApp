@@ -1,7 +1,13 @@
 use runner::data::output::OutputData;
 use serde::Serialize;
 
-/// Response runner output
+/// ## Response body's `runner_output` field.
+/// ----
+/// Args:
+/// ---
+/// * `exit_code` - status code of the execution;
+/// * `stdout` - output stream data of the execution;
+/// * `stderr` - error stream data of the execution;
 #[derive(Serialize)]
 pub struct RunnerOutput 
 {
