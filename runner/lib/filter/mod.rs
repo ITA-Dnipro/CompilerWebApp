@@ -33,7 +33,6 @@ pub(crate) fn build_filter(logger: &Logger) -> Result<BpfProgram, Error> {
         File::open(path)?, 
         TargetArch::x86_64
     )?;
-    // TODO: use preset string as func param
     if let Some(bpf_prg) = filters.remove(preset_name.as_str()) 
     {
         Ok(bpf_prg)
