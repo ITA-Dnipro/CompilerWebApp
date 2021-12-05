@@ -14,7 +14,7 @@ use rocket::fs::relative;
 use slog::Drain;
 
 use std::env::current_dir;
-use std::sync::Arc;
+use std::sync::{Arc, RwLock};
 use std::thread::{self, sleep};
 use std::time::Duration;
 use rocket::fs::FileServer;
@@ -90,7 +90,7 @@ fn rocket() -> _
         // Submission endpoint
         .mount("/", routes![submit::post_submit])
         // Server states
-        .manage(backend_config)
+        .manage(RwLock::new(backend_config))
         .manage(sessions_tracker)
         .manage(logger)
         // Templaiting fairing
@@ -101,8 +101,8 @@ fn rocket() -> _
                 let tracker = rocket.state::<Arc<SessionsTracker>>()
                     .unwrap().to_owned();
                 let logger = rocket.state::<Arc<slog::Logger>>().unwrap().to_owned();
-                let interval = rocket.state::<BackendConfig>()
-                    .unwrap().sessions_cleanup_interval;
+                let interval = rocket.state::<RwLock<BackendConfig>>()
+                    .unwrap().read().unwrap().sessions_cleanup_interval;
                 info!(logger, "Sessions cleaner started");
                 
                 thread::spawn(move ||
@@ -121,9 +121,12 @@ fn rocket() -> _
                 let tracker = rocket.state::<Arc<SessionsTracker>>()
                     .unwrap().to_owned();
                 let logger = rocket.state::<Arc<slog::Logger>>().unwrap().to_owned();
-                let config = rocket.state::<BackendConfig>().unwrap();
+                let config = rocket.state::<RwLock<BackendConfig>>().unwrap()
+                    .read().unwrap();
                 let interval = config.sessions_save_interval;
                 let save_path = config.sessions_data_file.clone();
+                
+                drop(config);
                 info!(logger, "Sessions saver started");
                 
                 thread::spawn(move ||

@@ -1,7 +1,7 @@
 use chrono::{DateTime, Utc};
 use rocket::{Request, http::{Cookie, CookieJar, Status}, request::{self, FromRequest}};
 use serde::{Deserialize, Serialize};
-use std::{hash::{Hash, Hasher}, path::{Path, PathBuf}, sync::Arc};
+use std::{hash::{Hash, Hasher}, path::{Path, PathBuf}, sync::{Arc, RwLock}};
 
 use crate::{config_struct::BackendConfig, filework::new_session_folder};
 use super::sessions_tracker::SessionsTracker;
@@ -93,7 +93,8 @@ impl<'r> FromRequest<'r> for Session
     {
         let logger = req.rocket().state::<Arc<slog::Logger>>().unwrap();
         let mut tracker = req.rocket().state::<Arc<SessionsTracker>>().unwrap();
-        let config = req.rocket().state::<BackendConfig>().unwrap();
+        let config = req.rocket().state::<RwLock<BackendConfig>>().unwrap()
+            .read().unwrap_or_else(|_| std::process::exit(1));
         let cookies = req.cookies();
 
         match cookies.get_private("session_id")

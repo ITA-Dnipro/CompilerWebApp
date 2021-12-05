@@ -1,5 +1,5 @@
 use std::path::{Path, PathBuf};
-use std::sync::Arc;
+use std::sync::{Arc, RwLock};
 use rocket::serde::json::Json;
 use rocket::response::status::Custom;
 use rocket::http::Status;
@@ -20,12 +20,14 @@ use crate::filework::save_source;
 pub async fn post_submit(
     compilation_json: Json<SubmitInput>, 
     submit_options: SubmitHeaders,
-    config: &State<BackendConfig>, 
+    config_lock: &State<RwLock<BackendConfig>>, 
     logger: &State<Arc<Logger>>,
     tracker: &State<Arc<SessionsTracker>>,
     session: Session) 
     -> Result<Json<SubmitOutput>, Custom<()>>
 {
+    let config = config_lock.read().unwrap_or_else(|_| std::process::exit(1));
+
     if !config.lang_extensions.contains_key(&compilation_json.lang)
     {
         return Ok(Json(SubmitOutput::new(-1, "", "Unknown language")));
