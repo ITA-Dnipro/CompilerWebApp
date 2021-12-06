@@ -58,7 +58,7 @@ pub(crate) fn parse_compiler_options(options: &Vec<String>) -> Result<HashMap<St
 }
 
 
-fn extract_key_and_value(compiler_option: &String) -> Result<(String, String), &'static str> {
+pub(crate) fn extract_key_and_value(compiler_option: &String) -> Result<(String, String), &'static str> {
     if compiler_option.len() > 0 {
         lazy_static! {
             static ref RE: Regex = Regex::new(r"^((?P<key_with_value>-{1,2}[[:alpha:]]+)=(?P<value_with_key>.+))|(?P<single_key>-{1,2}[[:alpha:]]+)$").unwrap();
