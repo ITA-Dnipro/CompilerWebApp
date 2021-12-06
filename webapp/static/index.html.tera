@@ -48,6 +48,7 @@
 
         </footer>
         <script> 
+            let source = "{{ source_code }}";
         </script>
         <script src="js/editor.js" > </script>
         <script src="js/submit_form.js" > </script>

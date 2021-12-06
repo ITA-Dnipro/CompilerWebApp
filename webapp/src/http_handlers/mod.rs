@@ -1,7 +1,7 @@
-// Submission endpoints
+/// `"/submit"` route endpoints
 pub mod submit;
-// Get index endpoint
+/// `"/"` route endpoints
 pub mod index;
 
-// Sessions handling
+/// Sessions handling
 pub mod sessions;

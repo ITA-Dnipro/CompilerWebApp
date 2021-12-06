@@ -1,44 +1,86 @@
 use chrono::{DateTime, Utc};
 use rocket::{Request, http::{Cookie, CookieJar, Status}, request::{self, FromRequest}};
 use serde::{Deserialize, Serialize};
-use std::{hash::{Hash, Hasher}, path::{Path, PathBuf}, sync::{Arc, Mutex}};
+use std::{hash::{Hash, Hasher}, path::{Path, PathBuf}, sync::{Arc, RwLock}};
 
 use crate::{config_struct::BackendConfig, filework::new_session_folder};
 use super::sessions_tracker::SessionsTracker;
 
-/// Anonymous session data guard
+/// ## Anonymous session data guard.
+/// ----
+/// Fields:
+/// ---
+/// * `id` - session's identifier;
+/// * `last_connection` - session's last connection date;
+/// * `folder` - a path to a folder, reserved for this session's files;
+/// * `source_path` - a path to the session's source code.
 #[derive(Eq, Clone, Serialize, Deserialize)]
 pub struct Session
 {
     pub id: u128,
     pub last_connection: DateTime<Utc>,
-    pub folder: PathBuf
+    pub folder: PathBuf,
+    pub source_path: PathBuf
 }
 
 impl Session
 {
-    /// Create a new Session instance with the given id
+    /// ## Create a new `Session` instance with the given id
+    /// ----
+    /// Args:
+    /// ---
+    /// * `id` - session's id.
     pub fn with_id(id: u128) -> Session
     {
         Session
         {
             id,
             last_connection: Utc::now(),
-            folder: PathBuf::new()
+            folder: PathBuf::new(),
+            source_path: PathBuf::new()
         }
     }
 
-    /// Session builder method, that sets parent_folder
+    /// `Session` builder method, that sets the `folder` field.
+    /// ----
+    /// Args:
+    /// ---
+    /// * `parent_folder` - a new 'folder' field value.
     pub fn folder(mut self, parent_folder: &Path) -> Session
     {
         self.folder = parent_folder.to_owned();
+
         self
     }
 
-    /// Establishes a new session, adds it to the sessions tracker
+    /// ## Sets `source_path` field.
+    /// ----
+    /// Args:
+    /// ---
+    /// * `source_path` - a new `source_path` field value.
+    pub fn set_source(&mut self, source_path: &Path)
+    {
+        self.source_path = source_path.to_owned();
+    }
+
+    /// ## Establishes a new session.
+    /// 
+    /// The new session is addded to the tracker, and a folder for it is created.
+    /// 
+    /// HTTP session cookie `session_id` is set to the new session's id with `htttp_only` flag set to true.
+    /// ----
+    /// Args:
+    /// ---
+    /// * `cookies` - current HTTP session cookies;
+    /// * `tracker` - `SessionsTracker` to add the new session to;
+    /// * `parent_folder` - a folder, in which this session's folder will be created;
+    /// * `logger` - a logger to log to.
+    /// ----
+    /// ## Returns:
+    /// New session's id, or `None` if a folder for it couldn't be created.
     pub(crate) fn establish_new(
         cookies: &CookieJar<'_>, 
-        tracker: &mut SessionsTracker,
+        tracker: &SessionsTracker,
         parent_folder: &Path,
         logger: &slog::Logger) 
         -> Option<u128>
@@ -70,9 +112,15 @@ impl Session
         Some(session_id)
     }
 
-    pub(crate) fn update_session(session: &mut Session)
+    /// ## Updates session's `last_connection` field to `Utc::now()`.
+    /// ----
+    /// Args:
+    /// ---
+    /// * `tracker` - `SessionsTracker` that holds the session;
+    /// * `session_id` - session's id.
+    pub(crate) fn update_session(tracker: &Arc<SessionsTracker>, session_id: &u128)
     {
-        session.last_connection = Utc::now();   
+        tracker.set_last_connection(session_id, Utc::now()); 
     }
 }
 
@@ -84,9 +132,9 @@ impl<'r> FromRequest<'r> for Session
     async fn from_request(req: &'r Request<'_>) -> request::Outcome<Self, Self::Error>
     {
         let logger = req.rocket().state::<Arc<slog::Logger>>().unwrap();
-        let mut tracker = req.rocket().state::<Arc<Mutex<SessionsTracker>>>()
-            .unwrap().lock().unwrap_or_else(|_| std::process::exit(1));
-        let config = req.rocket().state::<BackendConfig>().unwrap();
+        let mut tracker = req.rocket().state::<Arc<SessionsTracker>>().unwrap();
+        let config = req.rocket().state::<RwLock<BackendConfig>>().unwrap()
+            .read().unwrap_or_else(|_| std::process::exit(1));
         let cookies = req.cookies();
 
         match cookies.get_private("session_id")
@@ -104,7 +152,7 @@ impl<'r> FromRequest<'r> for Session
                     {
                         info!(logger, "Corrupted session ID");
 
-                        match Session::establish_new(req.cookies(),&mut tracker,
+                        match Session::establish_new(req.cookies(), tracker,
                             &config.sessions_data_dir, logger)
                         {
                             Some(session_id) =>  
@@ -121,13 +169,13 @@ impl<'r> FromRequest<'r> for Session
                     }
                 }
                 
-                match tracker.get_mut_session(&parsed_id)
+                match tracker.get_session(&parsed_id)
                 {
                     Some(session) => // Request from a tracked session
                     {
-                        Session::update_session(session);
+                        Session::update_session(tracker, &parsed_id);
 
-                        request::Outcome::Success(session.to_owned())
+                        request::Outcome::Success(session)
                     },
                     None =>  // Received cookie with untracked session id
                     {

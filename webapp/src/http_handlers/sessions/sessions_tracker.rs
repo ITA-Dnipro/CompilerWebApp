@@ -1,33 +1,50 @@
 #![allow(dead_code)]
+use std::sync::{Mutex, MutexGuard};
 use std::{collections::HashMap, path::Path};
 use std::time::Duration;
-use chrono::Utc;
+use chrono::{Utc, DateTime};
 use serde::{Deserialize, Serialize};
 
 use crate::filework::delete_folder;
 use super::session::Session;
 
-/// Anonymous user sessions tracker
+/// ## Anonymous user sessions tracker.
+/// _Internal sessions data is wrapped in a mutex, so it is save to use between threads as is._
+/// 
+/// ------
+/// Fields:
+/// * `sessions` - tracked sessions. They are not guaranteed to not be expired at all times;
+/// * `life_duration` - life span of a session, after which it is considered expired.
 #[derive(Serialize, Deserialize)]
 pub struct SessionsTracker 
 {
-    pub sessions: HashMap<u128, Session>,
+    pub sessions: Mutex<HashMap<u128, Session>>,
     pub life_duration: Duration
 }
 
 impl SessionsTracker
 {
-    /// Creates a new, empty SessionsTracker
+    /// Creates a new, empty `SessionsTracker`
     pub fn new() -> SessionsTracker
     {
         SessionsTracker
         {
-            sessions: HashMap::<u128, Session>::new(),
+            sessions: Mutex::new(HashMap::<u128, Session>::new()),
             life_duration: Duration::from_millis(0)
         }
     }
 
-    /// Deserializes a SessionsTracker istance from a .json file
+    /// ## Deserializes a `SessionsTracker` istance from a `.json` file.
+    /// 
+    /// ----
+    /// Args:
+    /// ---
+    /// * `path` - path to the file.
+    /// ----
+    /// ## Returns:
+    /// `Some(SessionsTracker)` is deserialization was successful, `None` otherwise.  
+    /// 
+    /// `None` may be returned if the file couldn't be read, or its contents could not be deserialized.
     pub fn from_file(path: &Path) -> Option<SessionsTracker>
     {
         let contents;
@@ -44,7 +61,16 @@ impl SessionsTracker
         }
     }
 
-    /// Serializes SessionsTracker into a .json file
+    /// ## Serializes `SessionsTracker` into a `.json` file.
+    /// 
+    /// ----
+    /// Args:
+    /// ---
+    /// * `path` - path to the file.
+    /// ----
+    /// ## Returns:
+    /// * `true`, if serialization was successful;
+    /// * `false`, if the object could not be serialized to text, or the file could not be written to.
     pub fn save(&self, path: &Path) -> bool
     {
         let serialized;
@@ -61,45 +87,108 @@ impl SessionsTracker
         }
     }
 
-    /// Builder method, that sets sessions life duration
+    /// ## Builder method, that sets sessions life duration.
+    /// ----
+    /// Args:
+    /// ---
+    /// * `duration` - new `life_duration` value.
     pub fn life_duration(mut self, duration: &Duration) -> Self
     {
         self.life_duration = duration.to_owned();
         self
     }
 
-    /// Returns a ref to a tracked session by its id
-    pub fn get_session(&self, id: &u128) -> Option<&Session>
+    /// ## Locks `sessions_data`.
+    /// ----
+    /// ## Returns:
+    /// `MutexGuard` for `sessions`. If the mutex is poisoned - it will end the process with the exit code of 1.
+    fn lock(&self) -> MutexGuard<HashMap<u128, Session>>
     {
-        self.sessions.get(&id)
+        self.sessions.lock().unwrap_or_else(|_| std::process::exit(1))
+    }
+    
+    /// ## Sets session's `source_path` field.
+    /// ----
+    /// Args:
+    /// ---
+    /// * `session_id` - id of the session to modify;
+    /// * `sourse_path` - new field value.
+    pub fn set_source_file(&self, session_id: &u128, source_path: &Path)
+    {
+        if let Some(session) = self.lock().get_mut(session_id)
+        {
+            session.set_source(source_path);
+        }
     }
 
-    /// Returns a mut ref to a tracked session by its id
-    pub fn get_mut_session(&mut self, id: &u128) -> Option<&mut Session>
+    /// ## Sets session's `last_connection` field.
+    /// ----
+    /// Args:
+    /// ---
+    /// * `session_id` - id of the session to modify;
+    /// * `new_date` - new field value.
+    pub fn set_last_connection(&self, session_id: &u128, new_date: DateTime<Utc>)
     {
-        self.sessions.get_mut(id)
+        let sessions = &mut self.lock();
+        if let Some(session) = sessions.get_mut(&session_id)
+        {
+            session.last_connection = new_date;
+        }
     }
 
-    /// Adds a new session to be tracked
-    pub fn insert_session(&mut self, session: Session)
+    /// ## Returns a cloned `Session` object from `sessions`.
+    /// ----
+    /// Args:
+    /// ---
+    /// * `session_id` - id the session to return.
+    /// ----
+    /// ## Returns:
+    /// `Some<Session>`, if the session is present in the `sessions`, `None` if it is not.
+    pub fn get_session(&self, session_id: &u128) -> Option<Session>
     {
-        self.sessions.insert(session.id, session);
+        if let Some(session) = self.lock().get(session_id)
+        {
+            Some(session.to_owned())
+        }
+        else
+        {
+            None
+        }
     }
 
-    /// Clears expired sessions
-    pub fn delete_old(&mut self) -> usize
+    /// ## Adds a new session to be tracked.
+    /// ----
+    /// Args:
+    /// ---
+    /// * `session` - a `Session` to insert.
+    pub fn insert_session(&self, session: Session)
+    {
+        self.lock().insert(session.id, session);
+    }
+
+    /// ## Clears expired sessions.
+    /// 
+    /// Session is expired if `current time - last_connection` is more than `life_duration`.
+    /// 
+    /// Deletes sessions from the `sessions` fields, as well as their respective folder.
+    /// 
+    /// ----
+    /// ## Returns:
+    /// Amount of deleted sessions.
+    pub fn delete_old(&self) -> usize
     {
         let now = Utc::now();
-        let sessions_iter = self.sessions.keys();
+        let sessions = &mut self.lock();
+        let sessions_iter = sessions.keys();
         let duration =  chrono::Duration::from_std(self.life_duration.clone()).unwrap();
         let to_delete = sessions_iter.filter(|s_id| 
-            now - self.sessions[s_id].last_connection > duration).map(|s_id| s_id.to_owned()).collect::<Vec<u128>>();
+            now - sessions[s_id].last_connection > duration).map(|s_id| s_id.to_owned()).collect::<Vec<u128>>();
         let mut deleted: usize = 0;
         
         for s_id in to_delete
         {
-            delete_folder(&self.sessions[&s_id].folder);
-            self.sessions.remove(&s_id);
+            delete_folder(&sessions[&s_id].folder);
+            sessions.remove(&s_id);
             deleted += 1;
         }
 
