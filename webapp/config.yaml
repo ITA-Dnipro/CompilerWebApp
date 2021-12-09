@@ -1,3 +1,4 @@
 # execution time limit, in ms
 execution_limit: 1000
+# entry point name, usually main
 entry_point: main

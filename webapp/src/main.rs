@@ -86,13 +86,14 @@ fn rocket() -> _
     }
 
     info!(logger, "Backend config:\n {:?}", backend_config);
-
+    let admin_routes = routes![submit::admin_panel, submit::authorize_admin, submit::admin_authorization];
     rocket::build()
         // index.html getters
         .mount("/", routes![index::get_index])
         .mount("/", FileServer::from(relative!("static")))
         // Submission endpoint
         .mount("/", routes![submit::post_submit])
+        .mount("/", admin_routes)
         // Server states
         .manage(backend_config)
         .manage(sessions_tracker)
@@ -142,7 +143,7 @@ fn rocket() -> _
                             .unwrap_or_else(|_| std::process::exit(1));
                         locked.save(&save_path);
                         drop(locked);
-                        info!(logger, "Saved sessions data to a file");
+                        info!(logger, "Saved sessions data to a file: {:?}", save_path);
                     }
                 });
             })))
