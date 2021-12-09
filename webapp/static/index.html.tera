@@ -48,7 +48,7 @@
 
         </footer>
         <script> 
-            let source = "{{ source_code }}";
+            let source = "{{ source_code | addslashes | linebreaksbr | replace(from="<br>", to="\n") | safe }}";
         </script>
         <script src="js/editor.js" > </script>
         <script src="js/submit_form.js" > </script>
