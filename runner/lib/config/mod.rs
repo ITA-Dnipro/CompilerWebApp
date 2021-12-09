@@ -89,8 +89,7 @@ fn parse_some_config()
     let log = slog::Logger::root(drain, o!());
     const ENV_VAR: &str = "CWA_RUNNER_CONFIG_PATH";
     env::set_var(ENV_VAR, "test/data/test_config.yaml");
+    
     let config =  Config::new(&log).unwrap();
     println!("{:?}", config);
-    //println!("{:?}", config.entry("execution_limit".to_string()));
-    //println!("{:?}", config.get(&"execution_limit".to_string()));
 }

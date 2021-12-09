@@ -1,4 +1,3 @@
-// TODO: predict memory manipulating
 #[cfg(test)]
 mod tests {
     use runner::run_code;
