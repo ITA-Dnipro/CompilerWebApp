@@ -1,6 +1,6 @@
 use rocket_dyn_templates::{Template};
 
-use crate::http_handlers::sessions::Session;
+use crate::http_handlers::sessions::{Session, UniPath};
 use super::index_context::IndexContext;
 
 /// ## `GET /` handler.
@@ -14,8 +14,15 @@ use super::index_context::IndexContext;
 #[get("/")]
 pub async fn get_index(session: Session) -> Template
 {
-    let source_code = std::fs::read_to_string(session.source_path)
-        .unwrap_or("".to_owned());
+    let source_code = match session.source_path
+    {
+        UniPath::FsPath(path) =>
+        {
+            std::fs::read_to_string(path)
+                .unwrap_or("".to_owned())
+        },
+        _ => "".to_owned()
+    };
     
     let context = IndexContext::new(source_code);
 
