@@ -1,6 +1,7 @@
-/// POST method handling for "/submit" route
+/// `POST` method handling for `"/submit"` route
 pub mod post;
 pub mod admin;
+
 /// Structs used by the "/submit" endpoint
 mod structs;
 

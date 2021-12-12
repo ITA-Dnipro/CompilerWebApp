@@ -1,5 +1,5 @@
 use std::path::{Path, PathBuf};
-use std::sync::Arc;
+use std::sync::{Arc, RwLock};
 use rocket::serde::json::Json;
 use rocket::response::status::Custom;
 use rocket::http::Status;
@@ -11,21 +11,35 @@ use compiler::handler::run_compilation;
 use runner::{run_code, data::output::OutputData};
 
 use crate::http_handlers::submit::structs::{SubmitInput, SubmitOutput, SubmitHeaders};
-use crate::http_handlers::sessions::Session;
+use crate::http_handlers::sessions::{Session, SessionsTracker};
 use crate::config_struct::BackendConfig;
 use crate::filework::save_source;
 
-/// POST /submit handler
+/// ## `POST /submit` handler.
+/// ----
+/// ## Args
+/// * `compilation_json` - request body JSON with compilation data;
+/// * `submit_options` - additional submission options;
+/// * `config_lock` - `RwLock` with server configuration. Only locked for reading;
+/// * `logger` - logger to log to;
+/// * `tracker` - `Arc` with server sessions tracker object;
+/// * `session` - info about current user session.
+/// ----
+/// Returns:
+/// ---
+/// `Result` with `Json<SubmitOutput>` as `Ok` value, or a response of `500 internal server error`.
 #[post("/submit", format = "json", data = "<compilation_json>")]
 pub async fn post_submit(
     compilation_json: Json<SubmitInput>, 
     submit_options: SubmitHeaders,
-    config: &State<BackendConfig>, 
-    logger: &State<Arc<Logger>>, 
+    config_lock: &State<RwLock<BackendConfig>>, 
+    logger: &State<Arc<Logger>>,
+    tracker: &State<Arc<SessionsTracker>>,
     session: Session) 
     -> Result<Json<SubmitOutput>, Custom<()>>
 {
-    
+    let config = config_lock.read().unwrap_or_else(|_| std::process::exit(1));
+
     if !config.lang_extensions.contains_key(&compilation_json.lang)
     {
         return Ok(Json(SubmitOutput::new(-1, "", "Unknown language")));
@@ -43,6 +57,7 @@ pub async fn post_submit(
         Some(path) => source_file = path,
         None => return Err(Custom(Status::InternalServerError, ()))
     }
+    tracker.set_source_file(&session.id, &source_file);
     trace!(logger, "Source code file created: {:?}", source_file);
 
     // Compilation
@@ -86,7 +101,7 @@ pub async fn post_submit(
         {
             Ok(exec_output) => 
             {
-                response_obj.append_runner_output(exec_output);
+                response_obj.set_runner_output(exec_output);
             },
             Err(_) => 
             {

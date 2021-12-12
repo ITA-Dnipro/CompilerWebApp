@@ -1,6 +1,11 @@
 use rocket::{Request, http::Status, request::{self, FromRequest, Outcome}};
 
-/// Flow control relevant request headers
+/// ## `POST /submit` headers, that customise request handling.
+/// ----
+/// Fields:
+/// ---
+/// * `execute` - a flag that is true when the code should be additionally executed.  
+/// Default value is `false`, and is only `true` if corresponding request header can be parsed to `true`.
 pub struct SubmitHeaders
 {
     pub execute: bool

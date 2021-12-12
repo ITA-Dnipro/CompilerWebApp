@@ -1,6 +1,5 @@
 #[derive(Default)]
 #[derive(Debug)]
-// TODO: add valuable exit_code
 pub struct OutputData {
     pub stdout: String,
     pub stderr: String,
