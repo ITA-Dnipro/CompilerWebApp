@@ -1,3 +1,13 @@
+/// Struct to hold results of running user code
+/// 
+/// Fields:
+/// * `stdout` both stdout and stderr of runned code
+/// * `stderr` error messages, that descripe what went wrong
+/// * `exit_code` process's exit exit
+/// 
+/// Stdout and Stderr are both redirected into `stdout`, so it may
+/// lead to some confusion, naming convention is temporary and has to be
+/// changed in the future
 #[derive(Default)]
 #[derive(Debug)]
 pub struct OutputData {
