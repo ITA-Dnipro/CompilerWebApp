@@ -1,3 +1,5 @@
+pub mod uni_path;
+
 use chrono::{DateTime, Utc};
 use rocket::{Request, http::{Cookie, CookieJar, Status}, request::{self, FromRequest}};
 use serde::{Deserialize, Serialize};
@@ -5,22 +7,23 @@ use std::{hash::{Hash, Hasher}, path::{Path, PathBuf}, sync::{Arc, RwLock}};
 
 use crate::{config_struct::BackendConfig, filework::new_session_folder};
 use super::sessions_tracker::SessionsTracker;
+use uni_path::UniPath;
 
 /// ## Anonymous session data guard.
 /// ----
 /// Fields:
 /// ---
 /// * `id` - session's identifier;
-/// * `last_connection` - session's last connection date;
+/// * `last_connection_timestamp` - session's last connection date;
 /// * `folder` - a path to a folder, reserved for this session's files;
 /// * `source_path` - a path to the session's source code.
 #[derive(Eq, Clone, Serialize, Deserialize)]
 pub struct Session
 {
     pub id: u128,
-    pub last_connection: DateTime<Utc>,
+    pub last_connection_timestamp: DateTime<Utc>,
     pub folder: PathBuf,
-    pub source_path: PathBuf
+    pub source_path: UniPath
 }
 
 impl Session
@@ -35,9 +38,9 @@ impl Session
         Session
         {
             id,
-            last_connection: Utc::now(),
+            last_connection_timestamp: Utc::now(),
             folder: PathBuf::new(),
-            source_path: PathBuf::new()
+            source_path: UniPath::FsPath(PathBuf::new())
         }
     }
 
@@ -60,7 +63,7 @@ impl Session
     /// * `source_path` - a new `source_path` field value.
     pub fn set_source(&mut self, source_path: &Path)
     {
-        self.source_path = source_path.to_owned();
+        self.source_path = UniPath::FsPath(source_path.to_owned());
     }
 
     /// ## Establishes a new session.
@@ -120,7 +123,7 @@ impl Session
     /// * `session_id` - session's id.
     pub(crate) fn update_session(tracker: &Arc<SessionsTracker>, session_id: &u128)
     {
-        tracker.set_last_connection(session_id, Utc::now()); 
+        tracker.set_last_conn_timestamp(session_id, Utc::now()); 
     }
 }
 
