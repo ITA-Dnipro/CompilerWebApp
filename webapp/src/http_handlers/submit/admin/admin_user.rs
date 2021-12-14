@@ -1,8 +1,8 @@
 use rocket;
-use rocket::http::Status;
 use rocket::request::{FromRequest, Outcome, Request};
 use slog::Logger;
 use std::sync::Arc;
+use super::consts::*;
 
 pub struct AdminUser;
 
@@ -15,10 +15,9 @@ impl<'r> FromRequest<'r> for AdminUser
 
     async fn from_request(req: &'r Request<'_>) -> Outcome<Self, Self::Error>
     {
-        const COOKIE_NAME: &'static str = "Admin";
         let cookies = req.cookies();
         let logger = req.rocket().state::<Arc<Logger>>().unwrap();
-        match cookies.get_private(COOKIE_NAME)
+        match cookies.get_private(ADMIN)
         {
             Some(admin) =>
             {
@@ -36,7 +35,7 @@ impl<'r> FromRequest<'r> for AdminUser
                     },
                     Err(_) => 
                     {
-                        error!(logger, "Failed to parse  `{COOKIE_NAME}` value from cookie");
+                        error!(logger, "Failed to parse  `{ADMIN}` value from cookie");
                         Outcome::Forward(())
                     }
                 }

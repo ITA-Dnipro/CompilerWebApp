@@ -21,6 +21,9 @@ use rocket::fs::FileServer;
 use config_struct::BackendConfig;
 
 use http_handlers::{submit, sessions::SessionsTracker, index};
+use submit::admin::admin_access_token::{AdminAccessToken};
+use configurable::Configurable;
+use runner::config::RunnerConfig;
 
 /// Launches the server
 #[launch]
@@ -38,7 +41,12 @@ fn rocket() -> _
     // Or at least I believe so, correct me if I'm wrong
     let drain = slog_async::Async::new(drain).build().fuse();
     let logger = Arc::new(slog::Logger::root(drain, o!()));
-
+    // Handlers that are used to get settings that can be changed
+    // from admin panel
+    let handlers: Vec<Box<dyn Configurable>> = vec![
+        Box :: from(AdminAccessToken),
+        Box :: from(RunnerConfig)
+    ];
     // Paths validation
     if !backend_config.sessions_data_dir.is_absolute()
     {
@@ -83,7 +91,12 @@ fn rocket() -> _
     }
 
     info!(logger, "Backend config:\n {:?}", backend_config);
-    let admin_routes = routes![submit::admin_panel, submit::authorize_admin, submit::admin_authorization];
+    let admin_routes = routes![
+        submit::admin_panel, 
+        submit::authorize_admin, 
+        submit::admin_authorization,
+        submit::handle_post_configs
+    ];
     rocket::build()
         // index.html getters
         .mount("/", routes![index::get_index])
@@ -95,6 +108,7 @@ fn rocket() -> _
         .manage(RwLock::new(backend_config))
         .manage(sessions_tracker)
         .manage(logger)
+        .manage(handlers)
         // Templaiting fairing
         .attach(rocket_dyn_templates::Template::fairing())
         // Sessions cleaner thread startup

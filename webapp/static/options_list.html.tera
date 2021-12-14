@@ -1,0 +1,23 @@
+{% extends "index_admin" %}
+
+{% block admin_panel %}
+    <div id="panel-content">
+        <form class="row g-3" action="/admin" method="post">
+            {% for config in settings %}
+                {% set index = loop.index0 %}
+                {% for key, value in config %}
+                    <div class="row mb-3 "> 
+                        <label class="visually-hidden  col-sm-2 col-form-label" for="{{ key }}"> {{ key }} </label>
+                        <div class="col-sm-10 input-group">
+                            <div class="input-group-text" style="width: 200px;"> {{ key }}</div>
+                            <input class="form-control" id="{{ key }}" name="{{ index }}.{{ key }}" value="{{ value }}">
+                        </div>
+                    </div>
+                {% endfor %}
+            {% endfor %}
+            <div class="col-12">
+                <input class="btn btn-primary" type="submit">
+            </div>
+        </form>
+    </div>
+{% endblock admin_panel %}

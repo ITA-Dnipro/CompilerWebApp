@@ -1,7 +1,7 @@
 #![feature(thread_is_running)]
 pub mod data;
+pub mod config;
 mod filter;
-mod config;
 mod runner;
 use std::{path::PathBuf};
 use crate::data::output::OutputData;

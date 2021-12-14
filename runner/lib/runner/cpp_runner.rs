@@ -1,7 +1,7 @@
 extern crate nix;
 use super::super::filter::build_filter;
 use super::Runner;
-use super::super::config::Config;
+use super::super::config::config_struct::Config;
 use crate::data::output::OutputData;
 use crate::data::error::Error;
 use super::lib_wrapper::LibWrapper as Lib;
