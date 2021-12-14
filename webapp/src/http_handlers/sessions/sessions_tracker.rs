@@ -102,7 +102,7 @@ impl SessionsTracker
     /// ----
     /// ## Returns:
     /// `MutexGuard` for `sessions`. If the mutex is poisoned - it will end the process with the exit code of 1.
-    fn lock(&self) -> MutexGuard<HashMap<u128, Session>>
+    fn lock_sessions(&self) -> MutexGuard<HashMap<u128, Session>>
     {
         self.sessions.lock().unwrap_or_else(|_| std::process::exit(1))
     }
@@ -115,7 +115,7 @@ impl SessionsTracker
     /// * `sourse_path` - new field value.
     pub fn set_source_file(&self, session_id: &u128, source_path: &Path)
     {
-        if let Some(session) = self.lock().get_mut(session_id)
+        if let Some(session) = self.lock_sessions().get_mut(session_id)
         {
             session.set_source(source_path);
         }
@@ -127,12 +127,12 @@ impl SessionsTracker
     /// ---
     /// * `session_id` - id of the session to modify;
     /// * `new_date` - new field value.
-    pub fn set_last_connection(&self, session_id: &u128, new_date: DateTime<Utc>)
+    pub fn set_last_conn_timestamp(&self, session_id: &u128, new_date: DateTime<Utc>)
     {
-        let sessions = &mut self.lock();
+        let sessions = &mut self.lock_sessions();
         if let Some(session) = sessions.get_mut(&session_id)
         {
-            session.last_connection = new_date;
+            session.last_connection_timestamp = new_date;
         }
     }
 
@@ -146,7 +146,7 @@ impl SessionsTracker
     /// `Some<Session>`, if the session is present in the `sessions`, `None` if it is not.
     pub fn get_session(&self, session_id: &u128) -> Option<Session>
     {
-        if let Some(session) = self.lock().get(session_id)
+        if let Some(session) = self.lock_sessions().get(session_id)
         {
             Some(session.to_owned())
         }
@@ -163,7 +163,7 @@ impl SessionsTracker
     /// * `session` - a `Session` to insert.
     pub fn insert_session(&self, session: Session)
     {
-        self.lock().insert(session.id, session);
+        self.lock_sessions().insert(session.id, session);
     }
 
     /// ## Clears expired sessions.
@@ -178,11 +178,12 @@ impl SessionsTracker
     pub fn delete_old(&self) -> usize
     {
         let now = Utc::now();
-        let sessions = &mut self.lock();
+        let sessions = &mut self.lock_sessions();
         let sessions_iter = sessions.keys();
         let duration =  chrono::Duration::from_std(self.life_duration.clone()).unwrap();
         let to_delete = sessions_iter.filter(|s_id| 
-            now - sessions[s_id].last_connection > duration).map(|s_id| s_id.to_owned()).collect::<Vec<u128>>();
+            now - sessions[s_id].last_connection_timestamp > duration)
+                .map(|s_id| s_id.to_owned()).collect::<Vec<u128>>();
         let mut deleted: usize = 0;
         
         for s_id in to_delete

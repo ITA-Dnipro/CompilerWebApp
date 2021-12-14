@@ -8,36 +8,67 @@ CompilerWebApp is a web server that allows users to study their code online with
 * Customers can submit their code and receive the results of the compilation
 
 ## User's guide
-### How to run the app
-To run the app simply launch it with `cargo run`.
-It doesn't require anything specific, but it additionaly allows the admin to set a folder for temporary user source code and compiled binary files. To do this, specify it as command line argument when launching the app: `cargo run "dir_path"`.
-This path is stored in the `COMPILATION_TEMP_DIR` environment variable:
-- if it already exists when the app is launched - its existing value will be used;
-- if the admin specified a value for the variable - it will be used, even if the variable already exists;
-- if it doesn't exist - default path will be used: `{workspace_folder}/tempdata`. Same goes for cases when already existing value or admin specified value are not valid paths.
+### How to launch the server
+The app requires the _nightly_ toolchain. It can be run with `cargo +nightly run` if the toolchain is installed,
+or just with `cargo run` if it also set as the default toolchain.
+
+Also the server requires a config file `BackendConfig.yaml`, where you can set required configurations:
+- `sessions_data_dir` - path to a folder where sessions data folders will be stored;
+- `sessions_data_file` - path to a file, where sessions tracker data will be serialized to and deserialized from;
+All time-based fields store time values in milliseconds.
+----
+- `session_life_duration` - amount of time a session can be active for;
+- `sessions_cleanup_interval` - interval of time that server waits before cleaning up expired sessions from the tracker and `sessions_data_dir`;
+- `sessions_save_interval` - interval of time that server waits before saving sessions tracker to the `sessions_data_file`;
+----
+- `lang_extensions` - a map of languages, as strings, and their respective source code files extensions, as strings.
+
+### Anonymous user sessions
+The server keeps track of anonymous user sessions, which means that users don't have to sign in to use the service. 
+User files are saved on the server for as long as the session is alive.
 
 ### Endpoints
-- `GET: "/"`
-Returns `index.html`.
+- `GET: "/"`:
+Returns `index.html`. If the session has already had source code submitted it will be rendered on the page.
 
-- `POST: "/submit"`
-Content-Type: `"application/json"`
+- `POST: "/submit"`:
+headers:
+```
+Content-Type: "application/json",
+execute: bool
+```
+`execute` header specifies whether the code should also be executed.
+The code will only be executed if the header's value can be parsed to `true` and the code can be compiled.
+This header may be omitted, then its value will be interpreted as `false`.
+
 body: 
 ```
 {
-    "code": "source code",
-    "lang": "language",
-    "options": "compiler options"
+    "code": string,
+    "lang": string,
+    "options": string
 }
 ```
 
 Returns result of the compilation:
-Content-Type: `"application/json"`
+
+headers:
+```
+Content-Type: "application/json"
+```
 body: 
 ```
 {
     "status code": int,
-    "stdout": "stdout",
-    "stderr": "stderr"
+    "stdout": string,
+    "stderr": string,
+    "runner_output":
+    {
+        "stdout": string,
+        "stderr": string,
+        "exit_code": int
+    }
 }
 ```
+
+`runner_output` field is only present if the `execute` flag was true and the code could be compiled.
