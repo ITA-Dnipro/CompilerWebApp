@@ -4,9 +4,9 @@ use super::Runner;
 use super::super::config::config_struct::Config;
 use crate::data::output::OutputData;
 use crate::data::error::Error;
+use crate::fd_divertion::fd_divertion::Divertion;
 use super::lib_wrapper::LibWrapper as Lib;
 use seccompiler::{apply_filter};
-use shh;
 use slog::{Logger, trace, debug};
 use sharedlib:: {Symbol};
 use std::io::Read;
@@ -38,6 +38,9 @@ impl<'time> CppRunner<'time>
 
 impl<'time> Runner<'time> for CppRunner<'time> 
 {
+    /// Run shared object file compiled
+    /// * Shared object itself has to be compiled with
+    /// -shared -fpic options
     fn run(&self) -> Result<OutputData, Error> 
     {
         let bpf_prg = build_filter(self.logger)?;
@@ -50,24 +53,22 @@ impl<'time> Runner<'time> for CppRunner<'time>
             self.config.entry_point.clone()
         )?;
         let shared_func = lib.shared_func()?;
-        let mut shh_output = shh::stdout()?;
+        let mut divertion = Divertion::new()?;
 
         match unsafe {fork() } 
         {
             Ok(ForkResult::Parent{child}) => 
             {
                 let (exit_code , err_msg)= self.join_child(child)?;
-                let mut buf: Vec<u8> = Vec::new();
-                shh_output.read_to_end(&mut buf)?;
-                let stdout = str::from_utf8(&buf)?;
-                drop(shh_output);
-                let output_data = OutputData::new(stdout, &err_msg, exit_code);
+                let stdout = divertion.to_string();
+                let output_data = OutputData::new(stdout.as_str(), &err_msg, exit_code);
                 debug!(self.logger, "output_data: {:?}", output_data);
  
                 return Ok(output_data);
             }
             Ok(ForkResult::Child) => 
             {
+                divertion.divert()?;
                 let exit_code = match apply_filter(&bpf_prg) {
                     Ok(_) => 
                     {

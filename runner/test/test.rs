@@ -49,11 +49,11 @@ mod tests {
     #[test]
     fn prints_text() {
         let root = get_logger();
-        let path = PathBuf::from("test/lib/simple_print.so");
+        let path = PathBuf::from("test/lib/simple");
         let output= run_code(CPP, path, &root).unwrap();
         
         assert_eq!("", output.stderr);
-        assert_eq!("HI from cout\nAgain from cout\nHI from cerr\n", output.stdout);
+        assert_eq!("HI from cout\nHI from cerr\nAgain from cout\n", output.stdout);
         
     }
 
@@ -82,9 +82,6 @@ mod tests {
             Err(err) => println!("{:?}", err),
             Ok(_) => {}
         }
-        //handle.join().unwrap();
-        //thread::sleep(Duration::new(2, 0));
-        //panic!("shared function runs too long");
     }
 
     #[test]
