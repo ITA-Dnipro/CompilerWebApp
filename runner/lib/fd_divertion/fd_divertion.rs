@@ -6,7 +6,7 @@ use std::os::unix::prelude::{FromRawFd, RawFd, AsRawFd};
 
 /// Silence and redirect output from stdout and stderr
 /// into pipe
-/// `Devertion` implements io::Read
+/// `Divertion` implements io::Read
 /// # Example
 /// ```rust
 /// crate::fd_divertion::fd_divertion::Divertion;
@@ -30,6 +30,8 @@ pub(crate) struct Divertion
 
 impl Divertion
 {
+    /// Create an instance of the `Divertion`. It create new pipe pair(pipe reader and pipe writer)
+    /// under the hood.
     pub fn new() -> Result<Self, Error>
     {
         let original_out = match unsafe { libc::dup(libc::STDOUT_FILENO)}
@@ -67,6 +69,7 @@ impl Divertion
         Ok((read_file, write_file))
     }
 
+    /// Commit divertion of standart stdout/stderr outputs to pipe
     pub fn divert(&self) -> Result<(), Error>
     {
         if -1 == unsafe { libc::dup2(self.write_file.as_raw_fd(), libc::STDOUT_FILENO) } {
