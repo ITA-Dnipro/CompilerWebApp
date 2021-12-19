@@ -1,8 +1,7 @@
 use std::fs::File;
 use std::io;
 use std::io::{Read, Error};
-use std::io::{Stdout, Stderr};
-use std::os::unix::prelude::{FromRawFd, RawFd, AsRawFd};
+use std::os::unix::prelude::{FromRawFd, AsRawFd};
 
 /// Silence and redirect output from stdout and stderr
 /// into pipe

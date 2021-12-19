@@ -1,9 +1,7 @@
 use configurable::Configurable;
-use std::fs::File;
 use std::io::{Error, ErrorKind};
 use std::collections::HashMap;
 use super::{config_struct::Config, config_io::ConfigIO};
-use slog::Logger;
 use serde_yaml;
 
 /// ## Struct to implement Configurable trait
