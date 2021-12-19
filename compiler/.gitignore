@@ -11,5 +11,5 @@ Cargo.lock
 
 
 # launch.json
-.vscode/*
-!.vscode/launch.json
+.vscode/
+

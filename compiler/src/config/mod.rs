@@ -10,7 +10,7 @@ use serde_yaml;
 use compiler::Compiler;
 use common::Common;
 
-
+/// Contains configuration data for entire Compiler module with all of the mantained compilers
 #[derive(Debug, Serialize, Deserialize)]
 pub (crate) struct Config {
     pub(crate) common: Common,
@@ -19,6 +19,7 @@ pub (crate) struct Config {
 }
 
 impl Config {
+    /// Constructor for this struct
     pub(crate) fn new(common: Common,
                gcc: Compiler,
                rustc: Compiler) -> Self {
@@ -30,7 +31,16 @@ impl Config {
     }
 }
 
-
+/// Load configuration for entire Compiler module from YAML configuration file
+///
+/// # Arguments
+///
+/// * `config_file_path` - holds path to YAML configuration file
+///
+/// # Result
+///
+/// * Returns `Result<Config, &'static str>` that holds configuration for Compiler module (in Ok()) or error message (in Err())
+/// 
 pub(crate) fn load_config(config_file_path: PathBuf) -> Result<Config, &'static str> {
     
     if !Path::new(config_file_path.to_str().unwrap()).exists() {
@@ -56,7 +66,12 @@ pub(crate) fn load_config(config_file_path: PathBuf) -> Result<Config, &'static 
     }
 }
 
-
+/// Create configuration for Compiler module
+///
+/// # Result
+///
+/// * Returns `Result<Config, &'static str>` that holds configuration for Compiler module (in Ok()) or error message (in Err())
+/// 
 pub(crate) fn get_default_config() -> Result<Config, &'static str> {
 
     // common
@@ -86,7 +101,17 @@ pub(crate) fn get_default_config() -> Result<Config, &'static str> {
     Ok(config)
 }
 
-
+/// Write configuration of Compiler module to YAML configuration file
+///
+/// # Arguments
+///
+/// * `config` - holds configuration for Compiler module
+/// * `file_path` - holds path to YAML configuration file
+///
+/// # Result
+///
+/// * Returns Ok() if configuration was wrote succesfully or Err() otherwise
+/// 
 pub(crate) fn write_config(config: &Config, file_path: &PathBuf) -> Result<(), ()> {
     
     let s = serde_yaml::to_string(config).unwrap();

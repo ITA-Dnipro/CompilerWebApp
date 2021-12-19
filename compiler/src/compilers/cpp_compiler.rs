@@ -14,6 +14,16 @@ pub(crate) struct CppCompiler {
 
 
 impl Compiler for CppCompiler {
+    /// Runs compilation process
+    ///
+    /// # Arguments
+    ///
+    /// * `input_data` - A struct that holds input parameters for compiler (source code, compiler options, etc)
+    ///
+    /// # Result
+    ///
+    /// * A struct that holds compiled binary file and specific compiler output (stdout, stderr)
+    /// 
     fn compile(&self, input_data: &InputData) -> Result<OutputData, &'static str> {
 
         let mut output_data = OutputData {
