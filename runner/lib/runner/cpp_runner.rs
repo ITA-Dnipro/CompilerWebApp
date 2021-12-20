@@ -1,7 +1,7 @@
 extern crate nix;
 use super::super::filter::build_filter;
 use super::Runner;
-use super::super::config::Config;
+use super::super::config::config_struct::Config;
 use crate::data::output::OutputData;
 use crate::data::error::Error;
 use crate::fd_divertion::fd_divertion::Divertion;
@@ -9,10 +9,9 @@ use super::lib_wrapper::LibWrapper as Lib;
 use seccompiler::{apply_filter};
 use slog::{Logger, trace, debug};
 use sharedlib:: {Symbol};
-use std::io::Read;
 use std::sync::{Arc, Mutex};
 use std::path::{PathBuf};
-use std::{process, str, thread, time::Instant};
+use std::{process, thread, time::Instant};
 use nix::sys::wait::{waitpid, WaitStatus};
 use nix::unistd::{fork, ForkResult, Pid};
 
@@ -53,7 +52,7 @@ impl<'time> Runner<'time> for CppRunner<'time>
             self.config.entry_point.clone()
         )?;
         let shared_func = lib.shared_func()?;
-        let mut divertion = Divertion::new()?;
+        let divertion = Divertion::new()?;
 
         match unsafe {fork() } 
         {

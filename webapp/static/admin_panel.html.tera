@@ -1,0 +1,18 @@
+{% extends "index_admin" %}
+
+{% block admin_panel %}
+<div id="panel-content">
+    <form class="row g-3" action=/admin method='post'>
+        <div class="row mb-3">
+            <label class="visually-hidden  col-sm-2 col-form-label" for="token"></label>
+            <div class="col-sm-10 input-group">
+                <div class="input-group-text" style="width: 200px;"> Access Token </div>
+                <input class="form-control" id='token' name='token' placeholder="Access Token"> </input>
+            </div>
+        </div>
+        <div class="col-12">
+            <input class="btn btn-primary" type="submit"> 
+        </div>
+    </form>
+</div>
+{% endblock admin_panel %}

@@ -84,7 +84,7 @@ function buildRunSuccessBlock(div_id, data_json) {
     let exit_code = data_json.runner_output.exit_code
     if (exit_code !== null && !stderr) {
         div_block.innerHTML =
-            '<div id="execution-finished" class=="alert alert-info">' +
+            '<div id="execution-finished" class="alert alert-info">' +
             "Execution finished with exit code: " + exit_code +
             '</div>'
     } else {

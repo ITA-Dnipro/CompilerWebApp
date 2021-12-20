@@ -49,3 +49,22 @@ select {
 .wide {
     width: 100%;
 }
+
+.head {
+    display: flex;
+    align-content: center;
+    justify-content: center;
+    padding: 10px;
+    background: #144700;
+    color: #f6fcf5;
+}
+
+#main-admin {
+    margin-top: 10px;
+    border: 1px solid;
+}
+
+#panel-content {
+    background: #eff8ed;
+    padding: 30px;
+}

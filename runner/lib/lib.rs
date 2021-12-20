@@ -1,8 +1,8 @@
 #![feature(thread_is_running)]
 pub mod data;
+pub mod config;
 mod fd_divertion;
 mod filter;
-mod config;
 mod runner;
 use std::{path::PathBuf};
 use crate::data::output::OutputData;
@@ -20,17 +20,22 @@ use slog::Logger;
 /// * `Result<OutputData, Error>`
 /// * `OutputData` is a struct that contains results of running code: stdout, stderr
 ///
-pub fn run_code<'time>(
+pub fn run_code<'time>
+(
     lang: CompilerType,
     object_path: PathBuf,
     logger: &'time Logger,
-) -> Result<OutputData, Error> {
-    let runner: Box<dyn Runner + 'time> = match lang {
-        CompilerType::Cpp => {
+) -> Result<OutputData, Error> 
+{
+    let runner: Box<dyn Runner + 'time> = match lang 
+    {
+        CompilerType::Cpp => 
+        {
 
             Box::new(CppRunner::new(object_path, logger)?)
         },
-        _ => return Err(
+        _ => return Err
+        (
             Error::NotImplementedError(String::from("Not implemented"))
         ),
     };
